@@ -1,0 +1,43 @@
+cat > /var/www/html/studiosdb/public/test.html << 'EOL'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test CSS/JS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/cours.css">
+    <style>
+        body { padding: 20px; }
+        .test-box {
+            border: 2px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+            background-color: #f5f5f5;
+        }
+        .dark-mode {
+            background-color: #333;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test de chargement CSS/JS</h1>
+    
+    <div class="test-box">
+        Boîte de test standard
+    </div>
+    
+    <div class="test-box dark-mode">
+        Boîte de test en mode sombre
+    </div>
+    
+    <script src="/js/cours.js"></script>
+    <script>
+        console.log('Test de script chargé avec succès');
+        document.querySelector('h1').addEventListener('click', function() {
+            this.style.color = 'blue';
+            alert('JavaScript fonctionne!');
+        });
+    </script>
+</body>
+</html>
+EOL

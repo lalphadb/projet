@@ -1,0 +1,122 @@
+@extends('layouts.admin')
+
+@section('title', 'Fiche membre')
+
+@section('content')
+<div class="content-wrapper p-4">
+    <div class="container-fluid">
+        <div class="card bg-dark text-white glass-card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center border-0">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-id-card me-2"></i> Fiche de {{ $membre->prenom }} {{ $membre->nom }}
+                </h3>
+                <div>
+                    <a href="{{ route('membres.index') }}" class="btn btn-outline-light me-2">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-light">
+                        <i class="fas fa-print"></i> Imprimer
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body row g-4">
+                <!-- Infos personnelles -->
+                <div class="col-md-6">
+                    <h5><i class="fas fa-user me-2"></i> Informations personnelles</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>Nom :</strong> {{ $membre->prenom }} {{ $membre->nom }}</li>
+                        <li><strong>Sexe :</strong> {{ $membre->sexe === 'H' ? 'Homme' : 'Femme' }}</li>
+                        <li><strong>Date de naissance :</strong> {{ $membre->date_naissance ? \Carbon\Carbon::parse($membre->date_naissance)->format('d-m-Y') : '—' }}</li>
+                        <li><strong>Téléphone :</strong> {{ $membre->telephone ?? '—' }}</li>
+                        <li><strong>Email :</strong> {{ $membre->email ?? '—' }}</li>
+                    </ul>
+                </div>
+
+                <!-- Adresse et école -->
+                <div class="col-md-6">
+                    <h5><i class="fas fa-map-marker-alt me-2"></i> Adresse</h5>
+                    <ul class="list-unstyled">
+                        <li>{{ $membre->numero_rue }} {{ $membre->nom_rue }}</li>
+                        <li>{{ $membre->ville }}, {{ $membre->province }} {{ $membre->code_postal }}</li>
+                        <li><strong>École :</strong> {{ $membre->ecole->nom ?? 'Non assignée' }}</li>
+                        <li><strong>Statut :</strong>
+                            @if($membre->approuve)
+                                <span class="badge bg-success">Approuvé</span>
+                            @else
+                                <span class="badge bg-warning text-dark">En attente</span>
+                            @endif
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Approbation -->
+                @if(!$membre->approuve && (
+                    auth()->user()->role === 'superadmin' ||
+                    (auth()->user()->role === 'admin' && auth()->user()->ecole_id === $membre->ecole_id)
+                ))
+                    <div class="col-12 text-end">
+                        <form action="{{ route('membres.approuver', $membre->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check-circle me-1"></i> Approuver le membre
+                            </button>
+                        </form>
+                    </div>
+                @endif
+
+                <!-- Ceintures -->
+                @if($membre->ceintures && $membre->ceintures->count())
+                    <div class="col-12">
+                        <h5><i class="fas fa-award me-2"></i> Ceintures obtenues</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach($membre->ceintures as $ceinture)
+                                <span class="badge bg-info">
+                                    {{ $ceinture->nom }} – {{ \Carbon\Carbon::parse($ceinture->pivot->date_obtention)->format('d-m-Y') }}
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Séminaires -->
+		@if($membre->seminaires && $membre->seminaires->count())
+   		 <div class="col-12">
+       		 <h5><i class="fas fa-chalkboard-teacher me-2"></i> Séminaires</h5>
+        		<ul class="list-group list-group-flush text-white">
+            		@foreach($membre->seminaires as $seminaire)
+               		 <li class="list-group-item bg-dark d-flex justify-content-between align-items-center border-bottom">
+                    		<span>
+                        {{ $seminaire->titre }} ({{ \Carbon\Carbon::parse($seminaire->date)->format('d-m-Y') }})
+                   	   </span>
+                    		<form action="{{ route('membres.seminaire.retirer', [$membre->id, $seminaire->id]) }}" method="POST" onsubmit="return confirm('Retirer ce séminaire ?')" class="m-0">
+                        		@csrf
+                        		@method('DELETE')
+                        		<button type="submit" class="btn btn-sm btn-danger">
+                            		<i class="fas fa-times-circle"></i> Retirer
+                                    </button>
+                    	        </form>
+                            </li>
+             		@endforeach
+                    </ul>
+    		</div>
+	    @endif
+
+                <!-- Cours suivis -->
+                @if($membre->cours && $membre->cours->count())
+                    <div class="col-12">
+                        <h5><i class="fas fa-calendar-alt me-2"></i> Cours suivis</h5>
+                        <ul class="list-group list-group-flush text-white">
+                            @foreach($membre->cours as $cours)
+                                <li class="list-group-item bg-dark border-bottom">
+                                    {{ $cours->nom }} – {{ $cours->jour }} ({{ $cours->heure_debut }} à {{ $cours->heure_fin }})
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

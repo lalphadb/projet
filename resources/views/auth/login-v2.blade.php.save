@@ -1,0 +1,91 @@
+@extends('layouts.login')
+
+@section('title', 'Connexion alternative')
+
+@section('content')
+<div class="login-box text-white" style="max-width: 420px;">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-white">Studios UnisDB</h2>
+        <p class="text-muted small">Connexion rapide et sécurisée</p>
+    </div>
+
+    <div class="p-4 rounded-3 border border-light-subtle shadow-sm" style="background-color: rgba(0,0,0,0.6);">
+        @if (session('status'))
+            <div class="alert alert-success small">{{ session('status') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+
+            <!-- Courriel -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Adresse courriel</label>
+                <input type="email" name="email" id="email" value="{{ old('email') }}"
+                       class="form-control form-control-lg"
+                       placeholder="ex: nom@exemple.com"
+                       required autofocus>
+                <x-input-error :messages="$errors->get('email')" class="text-danger small mt-1" />
+            </div>
+
+            <!-- Mot de passe -->
+            <div class="mb-3">
+                <label for="password" class="form-label">Mot de passe</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="password" class="form-control form-control-lg" placeholder="••••••••" required>
+                    <span class="input-group-text" onclick="togglePassword()" style="cursor:pointer;">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </span>
+                </div>
+                <x-input-error :messages="$errors->get('password')" class="text-danger small mt-1" />
+            </div>
+
+            <!-- Rappel / Mot de passe oublié -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                    <label class="form-check-label small" for="remember">Se souvenir de moi</label>
+                </div>
+                <a href="{{ route('password.request') }}" class="small text-info">
+                    🔑 Mot de passe oublié ?
+                </a>
+            </div>
+
+            <!-- Consentement Loi 25 -->
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" name="accept_policy" id="accept_policy" required>
+                <label class="form-check-label small" for="accept_policy">
+                    ✅ J’accepte la <a href="{{ route('politique') }}" class="text-warning" target="_blank">Politique de confidentialité</a>
+                </label>
+            </div>
+
+            <!-- Connexion -->
+            <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-gradient btn-lg">Connexion</button>
+            </div>
+
+            <!-- Lien secondaire -->
+            <div class="text-center">
+                <a href="{{ route('register') }}" class="btn btn-outline-light btn-sm">Créer un compte</a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    function togglePassword() {
+        const field = document.getElementById('password');
+        const icon = document.getElementById('toggleIcon');
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
+@endpush

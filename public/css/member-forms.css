@@ -1,0 +1,428 @@
+/* ===================================
+   STUDIOS UNIS - FORMULAIRES edit  MEMBRES
+   Styles pour création/modification
+   =================================== */
+
+/* === VARIABLES SPÉCIFIQUES === */
+:root {
+    --form-bg: rgba(255, 255, 255, 0.03);
+    --form-border: rgba(255, 255, 255, 0.08);
+    --input-focus: rgba(23, 162, 184, 0.25);
+    --success-bg: rgba(40, 167, 69, 0.1);
+    --error-bg: rgba(220, 53, 69, 0.1);
+}
+
+/* === CONTENEUR PRINCIPAL === */
+.member-form-container {
+    background: linear-gradient(135deg, 
+        rgba(23, 162, 184, 0.05) 0%, 
+        rgba(0, 0, 0, 0.1) 100%);
+    border-radius: 15px;
+    border: 1px solid var(--form-border);
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* === EN-TÊTE DU FORMULAIRE === */
+.member-form-header {
+    background: linear-gradient(135deg, 
+        rgba(23, 162, 184, 0.2) 0%, 
+        rgba(0, 202, 255, 0.1) 100%);
+    padding: 2rem;
+    border-bottom: 1px solid var(--form-border);
+    position: relative;
+}
+
+.form-title {
+    display: flex;
+    align-items: center;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.form-title i {
+ STUDIOS UNIS - FORMULAIRES MEMBRES
+   Styles pour création/modification   font-size: 1.75rem;
+    margin-right: 1rem;
+    color: #17a2b8;
+}
+
+.form-actions {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* === CORPS DU FORMULAIRE === */
+.member-form-body {
+    padding: 2rem;
+    background: var(--form-bg);
+}
+
+/* === SECTIONS DE FORMULAIRE === */
+.form-section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.section-header i {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+    color: #17a2b8;
+    width: 20px;
+    text-align: center;
+}
+
+.section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        rgba(23, 162, 184, 0.3) 0%, 
+        transparent 100%);
+    margin-left: 1rem;
+}
+
+/* === GROUPS DE CHAMPS === */
+.form-group-enhanced {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.form-label-enhanced {
+    display: block;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.form-label-enhanced.required::after {
+    content: ' *';
+    color: #dc3545;
+}
+
+.form-control-enhanced,
+.form-select-enhanced {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-control-enhanced:focus,
+.form-select-enhanced:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 3px var(--input-focus);
+    transform: translateY(-1px);
+}
+
+.form-control-enhanced::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* === VALIDATION FEEDBACK === */
+.form-group-enhanced .invalid-feedback {
+    display: block;
+    background: var(--error-bg);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.5rem;
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    position: relative;
+}
+
+.form-group-enhanced .invalid-feedback::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 1rem;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid rgba(220, 53, 69, 0.3);
+}
+
+.form-control-enhanced.is-invalid,
+.form-select-enhanced.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25);
+}
+
+/* === BOUTONS D'ACTION === */
+.form-actions-bottom {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--form-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-form-primary {
+    background: linear-gradient(135deg, #17a2b8 0%, #00caff 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.btn-form-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+    background: linear-gradient(135deg, #138496 0%, #0097b9 100%);
+}
+
+.btn-form-secondary {
+    background: rgba(108, 117, 125, 0.3);
+    border: 2px solid rgba(108, 117, 125, 0.5);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-form-secondary:hover {
+    background: rgba(108, 117, 125, 0.5);
+    border-color: rgba(108, 117, 125, 0.8);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* === GRILLES RESPONSIVE === */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-grid-mixed {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+}
+
+/* === ICÔNES D'ASSISTANCE === */
+.form-group-enhanced .field-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    pointer-events: none;
+    margin-top: 0.75rem;
+}
+
+.form-group-enhanced:focus-within .field-icon {
+    color: #17a2b8;
+}
+
+/* === HELP TEXT === */
+.form-help {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* === LOADING STATE === */
+.btn-form-primary.loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn-form-primary.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: buttonSpin 0.8s linear infinite;
+}
+
+@keyframes buttonSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .form-grid-2,
+    .form-grid-3,
+    .form-grid-mixed {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .member-form-header {
+        padding: 1.5rem;
+    }
+    
+    .form-actions {
+        position: static;
+        margin-top: 1rem;
+        justify-content: center;
+    }
+    
+    .form-actions-bottom {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .member-form-body {
+        padding: 1.5rem;
+    }
+}
+
+/* === ANIMATIONS === */
+.form-group-enhanced {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* === FOCUS ENHANCEMENTS === */
+.form-group-enhanced:focus-within .form-label-enhanced {
+    color: #17a2b8;
+    transform: translateX(2px);
+}
+
+/* === SPECIAL FIELDS === */
+.form-group-enhanced.has-icon {
+    position: relative;
+}
+
+.form-group-enhanced.has-icon .form-control-enhanced {
+    padding-right: 2.5rem;
+}
+/* === CORRECTIONS POUR LES PROBLÈMES IDENTIFIÉS === */
+
+/* === CORRECTION: SELECT DROPDOWN BLANC === */
+.form-select-enhanced option {
+    background: #495057 !important;
+    color: #fff !important;
+}
+
+.form-select-enhanced:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+}
+
+/* Correction spécifique pour Firefox */
+.form-select-enhanced {
+    color-scheme: dark;
+}
+
+/* === CORRECTION: LARGEUR DES CHAMPS === */
+.form-group-enhanced[data-field="email"] .form-control-enhanced {
+    max-width: 350px;
+}
+
+.form-group-enhanced[data-field="date_naissance"] .form-control-enhanced {
+    max-width: 200px;
+}
+
+.form-group-enhanced[data-field="ecole"] .form-select-enhanced {
+    max-width: 400px;
+}
+
+.form-group-enhanced[data-field="sexe"] .form-select-enhanced {
+    max-width: 200px;
+}
+
+.form-group-enhanced[data-field="telephone"] .form-control-enhanced {
+    max-width: 250px;
+}
+
+.form-group-enhanced[data-field="code_postal"] .form-control-enhanced {
+    max-width: 150px;
+}
+
+.form-group-enhanced[data-field="province"] .form-control-enhanced {
+    max-width: 100px;
+}
+
+/* === CORRECTION: ESPACEMENT BOUTONS === */
+.form-actions-bottom .d-flex {
+    gap: 2rem !important;
+}
+
+/* === GRILLES RESPONSIVE AMÉLIORÉES === */
+.form-grid-3 {
+    grid-template-columns: 200px 180px 250px;
+}
+
+.form-grid-address {
+    display: grid;
+    grid-template-columns: 200px 120px 150px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* Classes pour tailles de champs */
+.field-short { max-width: 200px; }
+.field-medium { max-width: 300px; }
+.field-long { max-width: 400px; }

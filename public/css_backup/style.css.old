@@ -1,0 +1,249 @@
+
+css_clean = """
+/* ------------------ FOND GLOBAL LOGIN (GLASS/DARK) ------------------ */
+body.login-page, .login-glass-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------ CONTAINER & CARTE LOGIN ------------------ */
+.login-glass-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-glass-card,
+.login-glass-card-pro {
+  background: rgba(34, 43, 69, 0.97);
+  border-radius: 22px;
+  box-shadow: 0 8px 40px 0 rgba(0,0,0,.25);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  color: #fff;
+}
+
+/* ------------------ TITRES ------------------ */
+.login-title-pro {
+  text-align: center;
+  font-size: 2.13em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.1em;
+  color: #fff;
+  text-shadow: 0 1px 8px #18316a60;
+}
+
+.login-subtitle-pro {
+  text-align: center;
+  font-size: 1.12em;
+  color: #ffd92c;
+  opacity: 0.97;
+  font-weight: 500;
+  margin-bottom: 1em;
+}
+
+/* ------------------ FORMULAIRES ------------------ */
+.form-group-pro {
+  margin-bottom: 1.1rem;
+}
+
+.form-label-pro {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.3em;
+  font-size: 1.04em;
+}
+
+.input-group-pro {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-pro {
+  width: 100%;
+  background: rgba(255,255,255,0.10);
+  border: 1.5px solid #3a579c;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1.07em;
+  padding: 0.6em 2.4em 0.6em 1em;
+  outline: none;
+  transition: border 0.18s, background 0.15s;
+  box-shadow: none;
+}
+
+.input-pro:focus {
+  background: #182443;
+  border-color: #47c6ff;
+}
+
+.input-ico {
+  position: absolute;
+  right: 0.9em;
+  color: #a8bbd9;
+  font-size: 1.18em;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.invalid-pro {
+  color: #ff9494;
+  font-size: 0.98em;
+  margin-top: 0.18em;
+  margin-left: 0.2em;
+}
+
+/* ------------------ CHECKBOXES & SWITCH ------------------ */
+.checkbox-pro {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: 0.97em;
+  font-weight: 500;
+  color: #fff;
+}
+
+.checkbox-pro input[type="checkbox"] {
+  accent-color: #00caff;
+  width: 19px;
+  height: 19px;
+}
+
+.form-check-input[type="checkbox"][role='switch'] {
+  width: 2.2em;
+  height: 1.2em;
+}
+
+/* ------------------ LIENS ------------------ */
+.link-policy-pro,
+.small-link-pro {
+  color: #ffd92c !important;
+  text-decoration: underline;
+  transition: color 0.18s;
+  font-size: 1em;
+}
+
+.link-policy-pro:hover,
+.small-link-pro:hover {
+  color: #1bbbe2 !important;
+}
+
+/* ------------------ BOUTONS ------------------ */
+.btn-pro {
+  border: none;
+  outline: none;
+  border-radius: 10px;
+  font-size: 1.05em;
+  font-weight: 600;
+  padding: 0.65em 1.1em;
+  box-shadow: 0 2px 8px 0 #18316a30;
+  cursor: pointer;
+  text-align: center;
+  min-width: 122px;
+  margin-bottom: 0.18em;
+  transition: background 0.17s, color 0.17s, box-shadow 0.16s;
+}
+
+.btn-pro-blue {
+  background: #00caff;
+  color: #fff;
+}
+
+.btn-pro-blue:hover {
+  background: #0097b9;
+}
+
+.btn-pro-outline {
+  background: transparent;
+  color: #fff;
+  border: 1.7px solid #cdd0dc;
+}
+
+.btn-pro-outline:hover {
+  background: #323e5d;
+}
+
+.btn-pro-danger {
+  background: #ff3b27;
+  color: #fff;
+}
+
+.btn-pro-danger:hover {
+  background: #e02a17;
+}
+
+/* Bouton Connexion spécifique */
+.btn-pro-connect {
+  min-width: 135px;
+  float: right;
+  margin-top: 0.35em;
+  margin-bottom: 0.7em;
+  font-size: 1.11em;
+  box-shadow: 0 3px 12px 0 #19c8ff30;
+}
+
+.btn-group-pro-center {
+  justify-content: center !important;
+  display: flex;
+  gap: 0.7em;
+  margin-bottom: 0.7em;
+}
+
+.btn-sm {
+  font-size: 0.92em;
+  padding: 0.45em 0.9em;
+  min-width: 100px;
+}
+
+/* ------------------ RESPONSIVE ------------------ */
+@media (max-width: 600px) {
+  .login-glass-card-pro {
+    padding: 1.2rem 0.5rem 1.1rem 0.5rem;
+    max-width: 96vw;
+  }
+  .btn-pro {
+    min-width: 110px;
+    font-size: 0.97em;
+  }
+
+.switch-toggle-pro {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: #fff;
+  font-size: 0.95em;
+}
+
+/* ------------------ Toggle-Swticg-pro ------------------ */
+.switch-toggle-pro .form-check-input[type="checkbox"][role='switch'] {
+  width: 2.4em;
+  height: 1.2em;
+  background-color: #3a579c;
+  border: none;
+  outline: none;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.switch-toggle-pro .form-check-input:checked {
+  background-color: #00caff;
+}
+}
+"""
+
+from pathlib import Path
+import pandas as pd
+css_path = Path("/mnt/data/style-cleaned.css")
+css_path.write_text(css_clean)
+css_path.name

@@ -1,0 +1,45 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour supprimer les flèches
+    function removePaginationArrows() {
+        // Chercher toutes les flèches par leur apparence dans le DOM
+        const allElements = document.querySelectorAll('*');
+        
+        allElements.forEach(el => {
+            if (el.tagName === 'svg' || el.tagName === 'SVG') {
+                // Vérifier si c'est une flèche de pagination
+                if (el.outerHTML.includes('arrow') || 
+                    el.parentElement.outerHTML.includes('pagination')) {
+                    // Vérifier si l'élément est au milieu de la page
+                    const rect = el.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const isInMiddle = rect.left > viewportWidth * 0.25 && 
+                                     rect.right < viewportWidth * 0.75 &&
+                                     rect.top > viewportHeight * 0.25 &&
+                                     rect.bottom < viewportHeight * 0.75;
+                    
+                    if (isInMiddle && el.parentElement) {
+                        // Supprimer l'élément s'il est au milieu de la page
+                        el.parentElement.removeChild(el);
+                    }
+                }
+            }
+            
+            // Si c'est un conteneur de flèches
+            if (el.classList && 
+                (el.classList.contains('pagination-arrow') || 
+                 el.classList.contains('pagination-arrows-container') ||
+                 el.classList.contains('pagination-large-arrow'))) {
+                
+                if (el.parentElement) {
+                    el.parentElement.removeChild(el);
+                }
+            }
+        });
+    }
+    
+    // Exécuter immédiatement et après un délai
+    removePaginationArrows();
+    setTimeout(removePaginationArrows, 300);
+    setTimeout(removePaginationArrows, 1000);
+});

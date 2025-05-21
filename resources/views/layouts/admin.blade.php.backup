@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>@yield('title', 'Studios Unis')</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSS Vendor -->
+    <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('vendor/adminlte/dist/css/adminlte.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+
+    <!-- Dark mode + glass -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        }
+        .card-header, .navbar, .sidebar {
+            background-color: rgba(0, 0, 0, 0.6) !important;
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini layout-fixed dark-mode">
+<div class="wrapper">
+
+    <!-- Navbar -->
+    @include('layouts.navbar')
+
+    <!-- Sidebar -->
+    @include('layouts.sidebar')
+
+    <!-- Content -->
+    <div class="content-wrapper pt-4 px-3">
+        @yield('content')
+    </div>
+
+    <!-- Footer -->
+    @include('layouts.footer')
+</div>
+
+<!-- JS -->
+<script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('vendor/adminlte/dist/js/adminlte.min.js') }}"></script>
+</body>
+</html>
