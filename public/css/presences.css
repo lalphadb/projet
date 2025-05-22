@@ -1,0 +1,71 @@
+/* Glassmorphism et Dark Mode pour Présences */
+body {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+}
+
+/* Cartes */
+.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.125);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* Boutons */
+.btn-glass {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-glass:hover {
+    transform: scale(1.05);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Badges */
+.badge-glass {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Alertes */
+.glass-alert {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: none;
+    color: white;
+}
+
+/* Statistiques */
+.glass-stats-box {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+}
+
+/* Tableaux */
+.table-glass {
+    color: white;
+}
+
+.table-glass thead {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.table-glass tbody tr {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.table-glass tbody tr:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
