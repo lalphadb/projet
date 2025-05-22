@@ -44,7 +44,8 @@ class UserController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('nom', 'like', "%{$search}%")
                   ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%");
             });
         }
         
@@ -95,10 +96,23 @@ class UserController extends Controller
             'send_credentials' => 'boolean',
         ]);
         
+        // Générer un username unique
+        $baseUsername = strtolower($request->prenom . '.' . $request->nom);
+        $username = $baseUsername;
+        $counter = 1;
+
+        // Vérifier l'unicité et ajouter un numéro si nécessaire
+        while (User::where('username', $username)->exists()) {
+            $username = $baseUsername . $counter;
+            $counter++;
+        }
+        
         $newUser = new User();
+        $newUser->name = $request->prenom . ' ' . $request->nom; // Nom complet pour Laravel
         $newUser->nom = $request->nom;
         $newUser->prenom = $request->prenom;
         $newUser->email = $request->email;
+        $newUser->username = $username; // Username unique généré
         $newUser->telephone = $request->telephone;
         $newUser->password = Hash::make($request->password);
         $newUser->role = $request->role;
@@ -195,6 +209,7 @@ class UserController extends Controller
         $request->validate($rules);
         
         // Mettre à jour les informations de base
+        $user->name = $request->prenom . ' ' . $request->nom; // Mettre à jour le nom complet
         $user->nom = $request->nom;
         $user->prenom = $request->prenom;
         $user->email = $request->email;
@@ -231,7 +246,7 @@ class UserController extends Controller
         $currentUser = Auth::user();
         
         // Vérifier les autorisations (seuls les super admin peuvent supprimer des utilisateurs)
-        if ($currentUser->role !== 'superladmin') {
+        if ($currentUser->role !== 'superadmin') {
             return redirect()->route('dashboard')->with('error', 'Vous n\'avez pas les permissions nécessaires pour effectuer cette action.');
         }
         

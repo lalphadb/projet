@@ -115,13 +115,14 @@ Route::middleware(['auth'])->group(function () {
     // Présences - CRUD Administratif
     Route::resource('presences', PresencesController::class)->names('presences');
 
-   // Présences Quotidiennes - Interface Instructeur
-  Route::prefix('quotidien')->name('quotidien.')->group(function () {
-    Route::get('/mes-cours', [PresenceInstantaneeController::class, 'dashboard'])->name('dashboard');
-    Route::get('/cours/{cours}/presences', [PresenceInstantaneeController::class, 'prendre'])->name('prendre');
-    Route::post('/cours/{cours}/presences', [PresenceInstantaneeController::class, 'enregistrer'])->name('enregistrer');
-    Route::get('/cours/{cours}/rapport', [PresenceInstantaneeController::class, 'voir'])->name('voir');
-});
+    // Présences Quotidiennes - Interface Instructeur
+    Route::prefix('quotidien')->name('quotidien.')->group(function () {
+        Route::get('/mes-cours', [PresenceInstantaneeController::class, 'dashboard'])->name('dashboard');
+        Route::get('/cours/{cours}/presences', [PresenceInstantaneeController::class, 'prendre'])->name('prendre');
+        Route::post('/cours/{cours}/presences', [PresenceInstantaneeController::class, 'enregistrer'])->name('enregistrer');
+        Route::get('/cours/{cours}/rapport', [PresenceInstantaneeController::class, 'voir'])->name('voir');
+    });
+
     // Portes ouvertes
     Route::resource('portes-ouvertes', PortesOuvertesController::class)->names('portes-ouvertes');
 
@@ -154,12 +155,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::patch('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        
+        // Routes manquantes - AJOUT ICI
+        Route::put('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+        Route::put('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
     });
 
     // Middleware de test
     Route::get('/test-checkrole', fn() => "✅ Middleware 'checkrole' chargé et fonctionnel.")
-        ->middleware('checkrole:admin,superadmin');
+        ->middleware('checkrole:admin,superladmin');
 });
 
+
+// Route de test temporaire
+Route::get('/test-login', function() {
+    $user = \App\Models\User::where('email', 'test@test.ca')->first();
+    if ($user && \Hash::check('AdminPass123', $user->password)) {
+        \Auth::login($user);
+        return redirect('/dashboard');
+    }
+    return "Échec du test de connexion";
+});
 // Auth Laravel Breeze / Fortify
 require __DIR__.'/auth.php';

@@ -107,20 +107,6 @@
                         
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="username" class="form-label text-white">Nom d'utilisateur *</label>
-                                <input type="text" 
-                                       class="form-control @error('username') is-invalid @enderror" 
-                                       id="username" 
-                                       name="username" 
-                                       value="{{ old('username') }}" 
-                                       required>
-                                <small class="text-muted">Utilisé pour la connexion (pas d'espaces ou caractères spéciaux)</small>
-                                @error('username')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="col-md-6">
                                 <label for="password" class="form-label text-white">Mot de passe *</label>
                                 <div class="position-relative">
                                     <input type="password" 
@@ -212,14 +198,16 @@
                         </h5>
                         
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="active" name="active" checked>
+                            <input type="hidden" name="active" value="0">
+                            <input class="form-check-input" type="checkbox" id="active" name="active" value="1" checked>
                             <label class="form-check-label text-white" for="active">
                                 Compte actif immédiatement
                             </label>
                         </div>
                         
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="send_credentials" name="send_credentials" checked>
+                            <input type="hidden" name="send_credentials" value="0">
+                            <input class="form-check-input" type="checkbox" id="send_credentials" name="send_credentials" value="1" checked>
                             <label class="form-check-label text-white" for="send_credentials">
                                 Envoyer les informations de connexion par email
                             </label>

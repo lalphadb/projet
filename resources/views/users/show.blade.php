@@ -297,11 +297,11 @@
                         
                         <div class="info-item">
                             <div class="info-label">
-                                <i class="fas fa-at me-2"></i>
-                                Nom d'utilisateur
+                                <i class="fas fa-calendar-plus me-2"></i>
+                                Compte créé le
                             </div>
                             <div class="info-value">
-                                {{ $user->username }}
+                                {{ $user->created_at->format('d/m/Y à H:i') }}
                             </div>
                         </div>
                         
