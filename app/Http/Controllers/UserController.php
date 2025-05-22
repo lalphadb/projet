@@ -44,8 +44,7 @@ class UserController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('nom', 'like', "%{$search}%")
                   ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%");
             });
         }
         
@@ -85,16 +84,15 @@ class UserController extends Controller
         }
         
         $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
+            'nom' => 'required|string|min:2|max:255',
+            'prenom' => 'required|string|min:2|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'telephone' => 'nullable|string|max:20',
-            'username' => 'required|string|max:255|unique:users|alpha_dash',
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             'role' => 'required|in:admin,instructor',
             'ecole_id' => 'required|exists:ecoles,id',
-            'active' => 'nullable|boolean',
-            'send_credentials' => 'nullable|boolean',
+            'active' => 'boolean',
+            'send_credentials' => 'boolean',
         ]);
         
         $newUser = new User();
@@ -102,7 +100,6 @@ class UserController extends Controller
         $newUser->prenom = $request->prenom;
         $newUser->email = $request->email;
         $newUser->telephone = $request->telephone;
-        $newUser->username = $request->username;
         $newUser->password = Hash::make($request->password);
         $newUser->role = $request->role;
         $newUser->ecole_id = $request->ecole_id;
@@ -177,8 +174,8 @@ class UserController extends Controller
         }
         
         $rules = [
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
+            'nom' => 'required|string|min:2|max:255',
+            'prenom' => 'required|string|min:2|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'telephone' => 'nullable|string|max:20',
         ];
@@ -187,7 +184,7 @@ class UserController extends Controller
         if ($currentUser->role === 'superadmin' && $currentUser->id !== $user->id) {
             $rules['role'] = 'required|in:admin,instructor';
             $rules['ecole_id'] = 'required|exists:ecoles,id';
-            $rules['active'] = 'nullable|boolean';
+            $rules['active'] = 'boolean';
         }
         
         // Si le mot de passe est fourni, le valider
@@ -234,7 +231,7 @@ class UserController extends Controller
         $currentUser = Auth::user();
         
         // Vérifier les autorisations (seuls les super admin peuvent supprimer des utilisateurs)
-        if ($currentUser->role !== 'superadmin') {
+        if ($currentUser->role !== 'superladmin') {
             return redirect()->route('dashboard')->with('error', 'Vous n\'avez pas les permissions nécessaires pour effectuer cette action.');
         }
         
