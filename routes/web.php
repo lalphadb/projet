@@ -9,6 +9,7 @@ use App\Http\Controllers\EcolesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MembresController;
 use App\Http\Controllers\PresencesController;
+use App\Http\Controllers\PresenceInstantaneeController;
 use App\Http\Controllers\PortesOuvertesController;
 use App\Http\Controllers\JourneePortesOuvertesController;
 use App\Http\Controllers\ExportController;
@@ -111,9 +112,16 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('ecoles', EcolesController::class)->names('ecoles');
     Route::put('ecoles/{ecole}/toggle-status', [EcolesController::class, 'toggleStatus'])->name('ecoles.toggle-status');
 
-    // Présences
+    // Présences - CRUD Administratif
     Route::resource('presences', PresencesController::class)->names('presences');
 
+   // Présences Quotidiennes - Interface Instructeur
+  Route::prefix('quotidien')->name('quotidien.')->group(function () {
+    Route::get('/mes-cours', [PresenceInstantaneeController::class, 'dashboard'])->name('dashboard');
+    Route::get('/cours/{cours}/presences', [PresenceInstantaneeController::class, 'prendre'])->name('prendre');
+    Route::post('/cours/{cours}/presences', [PresenceInstantaneeController::class, 'enregistrer'])->name('enregistrer');
+    Route::get('/cours/{cours}/rapport', [PresenceInstantaneeController::class, 'voir'])->name('voir');
+});
     // Portes ouvertes
     Route::resource('portes-ouvertes', PortesOuvertesController::class)->names('portes-ouvertes');
 
