@@ -1,0 +1,511 @@
+/* ===================================
+   REINSCRIPTION - MODULE MEMBRE
+   Interface membre glassmorphique
+   ================================== */
+
+/* Variables CSS */
+:root {
+    --reinscription-primary: linear-gradient(135deg, #667eea, #764ba2);
+    --reinscription-success: linear-gradient(135deg, #48bb78, #38b2ac);
+    --reinscription-warning: linear-gradient(135deg, #ed8936, #dd6b20);
+    --reinscription-glass: rgba(26, 54, 93, 0.85);
+    --reinscription-text: #e2e8f0;
+    --reinscription-text-muted: #a0aec0;
+}
+
+/* Container principal */
+.reinscription-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, 
+        rgba(13, 27, 42, 0.95) 0%, 
+        rgba(26, 54, 93, 0.95) 50%,
+        rgba(45, 55, 72, 0.95) 100%);
+    backdrop-filter: blur(20px);
+    padding: 20px 0;
+}
+
+.reinscription-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px 20px;
+    background: var(--reinscription-glass);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+}
+
+.reinscription-title {
+    color: var(--reinscription-text);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    background: var(--reinscription-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.reinscription-subtitle {
+    color: var(--reinscription-text-muted);
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+.membre-info {
+    background: rgba(72, 187, 120, 0.1);
+    border: 1px solid rgba(72, 187, 120, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.membre-nom {
+    color: #48bb78;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.membre-ecole {
+    color: var(--reinscription-text-muted);
+    font-size: 1rem;
+}
+
+/* Section cours actuels */
+.cours-actuels {
+    background: var(--reinscription-glass);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+}
+
+.section-title {
+    color: var(--reinscription-text);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #48bb78;
+    font-size: 1.3rem;
+}
+
+.cours-card {
+    background: rgba(45, 55, 72, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.cours-card:hover {
+    background: rgba(45, 55, 72, 0.9);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.cours-nom {
+    color: var(--reinscription-text);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.cours-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.cours-detail {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--reinscription-text-muted);
+    font-size: 0.9rem;
+}
+
+.cours-detail i {
+    color: #667eea;
+    font-size: 1rem;
+}
+
+.cours-horaire {
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    color: #a5b4fc;
+    display: inline-block;
+    margin: 2px;
+}
+
+/* Section réinscription */
+.reinscription-section {
+    background: var(--reinscription-glass);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+}
+
+.session-info {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.session-nom {
+    color: #667eea;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.session-dates {
+    color: var(--reinscription-text-muted);
+    font-size: 1rem;
+}
+
+.cours-disponibles {
+    margin-top: 25px;
+}
+
+.cours-groupe {
+    margin-bottom: 30px;
+    background: rgba(45, 55, 72, 0.5);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.groupe-title {
+    color: var(--reinscription-text);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.cours-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.cours-option {
+    background: rgba(55, 65, 81, 0.7);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    backdrop-filter: blur(10px);
+}
+
+.cours-option:hover {
+    background: rgba(55, 65, 81, 0.9);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-2px);
+}
+
+.cours-option.selected {
+    border-color: #48bb78;
+    background: rgba(72, 187, 120, 0.1);
+}
+
+.cours-option input[type="checkbox"] {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 20px;
+    height: 20px;
+    accent-color: #48bb78;
+}
+
+.option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.option-nom {
+    color: var(--reinscription-text);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-right: 25px;
+}
+
+.option-details {
+    margin-bottom: 10px;
+}
+
+.option-instructeur {
+    color: var(--reinscription-text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.option-places {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.places-info {
+    font-size: 0.85rem;
+    color: var(--reinscription-text-muted);
+}
+
+.places-gauge {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.places-fill {
+    height: 100%;
+    background: var(--reinscription-success);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.places-fill.warning {
+    background: var(--reinscription-warning);
+}
+
+.places-fill.danger {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+}
+
+.option-tarif {
+    color: #48bb78;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Boutons d'action */
+.actions-container {
+    background: var(--reinscription-glass);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    text-align: center;
+}
+
+.total-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(45, 55, 72, 0.6);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.total-label {
+    color: var(--reinscription-text-muted);
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+.total-montant {
+    color: #48bb78;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.btn-confirmer {
+    background: var(--reinscription-success);
+    border: none;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-right: 15px;
+    min-width: 200px;
+}
+
+.btn-confirmer:hover {
+    background: linear-gradient(135deg, #38a169, #319795);
+    box-shadow: 0 10px 30px rgba(72, 187, 120, 0.4);
+    transform: translateY(-3px);
+}
+
+.btn-confirmer:disabled {
+    background: rgba(107, 114, 128, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-annuler {
+    background: rgba(107, 114, 128, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--reinscription-text);
+    padding: 15px 40px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.btn-annuler:hover {
+    background: rgba(107, 114, 128, 1);
+    color: white;
+}
+
+/* Page réinscriptions fermées */
+.reinscriptions-fermees {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--reinscription-glass);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+}
+
+.fermees-icon {
+    font-size: 4rem;
+    color: #ed8936;
+    margin-bottom: 20px;
+}
+
+.fermees-title {
+    color: var(--reinscription-text);
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.fermees-message {
+    color: var(--reinscription-text-muted);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .reinscription-container {
+        padding: 15px;
+    }
+    
+    .reinscription-title {
+        font-size: 2rem;
+    }
+    
+    .cours-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .cours-details {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .actions-container {
+        padding: 20px;
+    }
+    
+    .btn-confirmer,
+    .btn-annuler {
+        width: 100%;
+        margin: 5px 0;
+        min-width: auto;
+    }
+    
+    .total-montant {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .reinscription-header {
+        padding: 20px 15px;
+    }
+    
+    .cours-actuels,
+    .reinscription-section,
+    .actions-container {
+        padding: 20px 15px;
+    }
+    
+    .reinscription-title {
+        font-size: 1.7rem;
+    }
+    
+    .fermees-icon {
+        font-size: 3rem;
+    }
+    
+    .fermees-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animations */
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale
+
+
+/* Animations (suite) */
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.cours-card { animation: slideInUp 0.5s ease-out; }
+.cours-option { animation: bounceIn 0.6s ease-out; }
+.btn-confirmer.loading::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    width: 20px; height: 20px; margin: -10px 0 0 -10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white; border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
