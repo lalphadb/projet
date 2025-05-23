@@ -206,6 +206,80 @@ class CoursSessionController extends Controller
     }
 
     /**
+     * Génère automatiquement les sessions pour une année
+     */
+    public function generateSessions(Request $request)
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'year' => 'required|integer|min:2020|max:2040',
+            'sessions' => 'required|array|min:1',
+            'sessions.*' => 'in:hiver,printemps,ete,automne',
+        ]);
+        
+        $year = $request->year;
+        $ecoleId = $user->ecole_id;
+        $sessionsCreees = 0;
+        
+        // Définition des sessions standards
+        $sessionsData = [
+            'hiver' => [
+                'nom' => "Hiver $year",
+                'mois' => 'Jan-Mar',
+                'date_debut' => "$year-01-01",
+                'date_fin' => "$year-03-31",
+            ],
+            'printemps' => [
+                'nom' => "Printemps $year",
+                'mois' => 'Avr-Juin',
+                'date_debut' => "$year-04-01",
+                'date_fin' => "$year-06-30",
+            ],
+            'ete' => [
+                'nom' => "Été $year",
+                'mois' => 'Juil-Sep',
+                'date_debut' => "$year-07-01",
+                'date_fin' => "$year-09-30",
+            ],
+            'automne' => [
+                'nom' => "Automne $year",
+                'mois' => 'Oct-Déc',
+                'date_debut' => "$year-10-01",
+                'date_fin' => "$year-12-31",
+            ],
+        ];
+        
+        foreach ($request->sessions as $session) {
+            // Vérifier si cette session existe déjà
+            $sessionExiste = CoursSession::where('ecole_id', $ecoleId)
+                ->where('nom', $sessionsData[$session]['nom'])
+                ->exists();
+                
+            if (!$sessionExiste) {
+                // Créer la session
+                CoursSession::create([
+                    'ecole_id' => $ecoleId,
+                    'nom' => $sessionsData[$session]['nom'],
+                    'mois' => $sessionsData[$session]['mois'],
+                    'date_debut' => $sessionsData[$session]['date_debut'],
+                    'date_fin' => $sessionsData[$session]['date_fin'],
+                    'inscriptions_actives' => true,
+                    'visible' => true,
+                    'couleur' => '#17a2b8',
+                ]);
+                
+                $sessionsCreees++;
+            }
+        }
+        
+        Log::info("$sessionsCreees sessions générées automatiquement pour l'année $year par user #{$user->id}");
+        
+        return redirect()->route('cours.sessions.index')
+            ->with('success', "$sessionsCreees session(s) générée(s) avec succès pour l'année $year.");
+    }
+
+    /**
      * 🆕 NOUVEAU : Duplique une session avec tous ses cours et horaires
      */
     public function dupliquer(Request $request, CoursSession $session)
@@ -255,13 +329,23 @@ class CoursSessionController extends Controller
                         'niveau' => $cours->niveau,
                         'tarif' => $cours->tarif,
                         'places_max' => $cours->places_max,
-                        'jours' => $cours->jours,
-                        'heure_debut' => $cours->heure_debut,
-                        'heure_fin' => $cours->heure_fin,
-                        'plages_horaires' => $cours->plages_horaires,
+                        'date_debut' => $nouvelleSession->date_debut,
+                        'date_fin' => $nouvelleSession->date_fin,
                         'statut' => 'actif',
-                        'visible' => true,
                     ]);
+
+                    // Dupliquer les horaires
+                    foreach ($cours->horaires as $horaire) {
+                        CoursHoraire::create([
+                            'cours_id' => $nouveauCours->id,
+                            'jour' => $horaire->jour,
+                            'heure_debut' => $horaire->heure_debut,
+                            'heure_fin' => $horaire->heure_fin,
+                            'salle' => $horaire->salle,
+                            'notes' => $horaire->notes,
+                            'active' => true,
+                        ]);
+                    }
                     
                     $coursCreates++;
                 }

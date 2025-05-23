@@ -1,4 +1,3 @@
-// app/Http/Controllers/PresenceInstantaneeController.php
 <?php
 namespace App\Http\Controllers;
 

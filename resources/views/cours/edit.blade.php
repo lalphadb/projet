@@ -4,10 +4,139 @@
 
 @push('styles')
 <link href="{{ asset('css/cours.css') }}" rel="stylesheet">
-@endpush
+<style>
+/* Styles pour les horaires multiples - Edition */
+.horaires-container {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
 
-@push('scripts')
-<script src="{{ asset('js/cours.js') }}"></script>
+.horaire-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.horaire-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(23, 162, 184, 0.3);
+}
+
+.horaire-item:last-child {
+    margin-bottom: 0;
+}
+
+.horaire-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.horaire-title {
+    color: #17a2b8;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.horaire-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-remove-horaire {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-remove-horaire:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+.btn-add-horaire {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-add-horaire:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.horaire-preview {
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    color: #17a2b8;
+    font-weight: 500;
+}
+
+.horaire-existing {
+    border-left: 4px solid #28a745;
+}
+
+.horaire-new {
+    border-left: 4px solid #ffc107;
+}
+
+.horaire-modified {
+    border-left: 4px solid #17a2b8;
+}
+
+.change-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ffc107;
+    color: #000;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.inscriptions-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #ffc107;
+}
+</style>
 @endpush
 
 @section('content')
@@ -33,14 +162,20 @@
             </div>
         </div>
 
-        <!-- Informations sur les inscriptions -->
+        <!-- Avertissement inscriptions -->
         @if($cours->inscriptions->count() > 0)
-            <div class="alert alert-info mb-4">
+            <div class="inscriptions-warning">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-info-circle me-3"></i>
+                    <i class="fas fa-exclamation-triangle me-3 fa-lg"></i>
                     <div>
                         <strong>Attention :</strong> Ce cours a actuellement {{ $cours->inscriptions->count() }} inscription(s).
-                        Les modifications importantes (horaires, jours) peuvent affecter les membres inscrits.
+                        Les modifications d'horaires peuvent affecter les membres inscrits.
+                        <div class="mt-2">
+                            <small>
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Conseil : Prévenez les membres avant de modifier les horaires ou créez un nouveau cours.
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -64,7 +199,7 @@
                                id="nom" 
                                name="nom" 
                                value="{{ old('nom', $cours->nom) }}" 
-                               placeholder="Ex: Yoga débutant, Pilates avancé..."
+                               placeholder="Ex: Karaté débutant, Judo avancé..."
                                required>
                         @error('nom')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -84,7 +219,7 @@
                             <option value="">Sélectionner une session</option>
                             @foreach($sessions as $session)
                                 <option value="{{ $session->id }}" 
-                                        {{ (old('session_id', $cours->session_id) == $session->id) ? 'selected' : '' }}>
+                                        {{ old('session_id', $cours->session_id) == $session->id ? 'selected' : '' }}>
                                     {{ $session->nom }} ({{ $session->mois }})
                                 </option>
                             @endforeach
@@ -109,76 +244,103 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                </div>
 
-                    <!-- Jours de la semaine -->
-                    <div class="col-12">
-                        <label class="form-label">
-                            <i class="fas fa-calendar-week me-2"></i>
-                            Jours de cours *
-                        </label>
-                        <div class="jours-selector">
-                            @php
-                                $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-                                $joursLabels = [
-                                    'lundi' => 'Lundi',
-                                    'mardi' => 'Mardi', 
-                                    'mercredi' => 'Mercredi',
-                                    'jeudi' => 'Jeudi',
-                                    'vendredi' => 'Vendredi',
-                                    'samedi' => 'Samedi',
-                                    'dimanche' => 'Dimanche'
-                                ];
-                                $coursJours = old('jours', is_array($cours->jours) ? $cours->jours : json_decode($cours->jours, true) ?? []);
-                            @endphp
-                            @foreach($jours as $jour)
-                                <label class="jour-checkbox">
-                                    <input type="checkbox" 
-                                           name="jours[]" 
-                                           value="{{ $jour }}" 
-                                           {{ (is_array($coursJours) && in_array($jour, $coursJours)) ? 'checked' : '' }}>
-                                    <span>{{ $joursLabels[$jour] }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('jours')
-                            <div class="text-danger mt-2">{{ $message }}</div>
-                        @enderror
-                        <div class="jours-preview"></div>
-                    </div>
-
-                    <!-- Horaires -->
-                    <div class="col-md-6">
-                        <label for="heure_debut" class="form-label">
+                <!-- SECTION HORAIRES MULTIPLES -->
+                <div class="horaires-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-white mb-0">
                             <i class="fas fa-clock me-2"></i>
-                            Heure de début *
-                        </label>
-                        <input type="time" 
-                               class="form-control @error('heure_debut') is-invalid @enderror" 
-                               id="heure_debut" 
-                               name="heure_debut" 
-                               value="{{ old('heure_debut', $cours->heure_debut) }}" 
-                               required>
-                        @error('heure_debut')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                            Plages Horaires *
+                            <small class="text-muted ms-2">({{ $cours->horaires->count() }} actuellement)</small>
+                        </h5>
+                        <button type="button" class="btn-add-horaire" onclick="ajouterHoraire()">
+                            <i class="fas fa-plus"></i>
+                            Ajouter une plage
+                        </button>
                     </div>
 
-                    <div class="col-md-6">
-                        <label for="heure_fin" class="form-label">
-                            <i class="fas fa-clock me-2"></i>
-                            Heure de fin *
-                        </label>
-                        <input type="time" 
-                               class="form-control @error('heure_fin') is-invalid @enderror" 
-                               id="heure_fin" 
-                               name="heure_fin" 
-                               value="{{ old('heure_fin', $cours->heure_fin) }}" 
-                               required>
-                        @error('heure_fin')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                    <div id="horaires-container">
+                        @foreach($cours->horaires as $index => $horaire)
+                            <div class="horaire-item horaire-existing" data-index="{{
+
+<div class="horaire-item horaire-existing" data-index="{{ $index }}" data-horaire-id="{{ $horaire->id }}">
+                                <div class="horaire-header">
+                                    <div class="horaire-status">
+                                        <span class="horaire-title">Plage horaire #{{ $index + 1 }}</span>
+                                        <span class="badge badge-success">Existant</span>
+                                    </div>
+                                    @if($cours->horaires->count() > 1)
+                                        <button type="button" class="btn-remove-horaire" onclick="supprimerHoraire(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Jour *</label>
+                                        <select name="horaires[{{ $index }}][jour]" class="form-select" required>
+                                            <option value="">Choisir</option>
+                                            <option value="lundi" {{ old("horaires.{$index}.jour", $horaire->jour) == 'lundi' ? 'selected' : '' }}>Lundi</option>
+                                            <option value="mardi" {{ old("horaires.{$index}.jour", $horaire->jour) == 'mardi' ? 'selected' : '' }}>Mardi</option>
+                                            <option value="mercredi" {{ old("horaires.{$index}.jour", $horaire->jour) == 'mercredi' ? 'selected' : '' }}>Mercredi</option>
+                                            <option value="jeudi" {{ old("horaires.{$index}.jour", $horaire->jour) == 'jeudi' ? 'selected' : '' }}>Jeudi</option>
+                                            <option value="vendredi" {{ old("horaires.{$index}.jour", $horaire->jour) == 'vendredi' ? 'selected' : '' }}>Vendredi</option>
+                                            <option value="samedi" {{ old("horaires.{$index}.jour", $horaire->jour) == 'samedi' ? 'selected' : '' }}>Samedi</option>
+                                            <option value="dimanche" {{ old("horaires.{$index}.jour", $horaire->jour) == 'dimanche' ? 'selected' : '' }}>Dimanche</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Heure début *</label>
+                                        <input type="time" name="horaires[{{ $index }}][heure_debut]" 
+                                               class="form-control" 
+                                               value="{{ old("horaires.{$index}.heure_debut", $horaire->heure_debut) }}" 
+                                               required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Heure fin *</label>
+                                        <input type="time" name="horaires[{{ $index }}][heure_fin]" 
+                                               class="form-control" 
+                                               value="{{ old("horaires.{$index}.heure_fin", $horaire->heure_fin) }}" 
+                                               required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Salle</label>
+                                        <input type="text" name="horaires[{{ $index }}][salle]" 
+                                               class="form-control" 
+                                               value="{{ old("horaires.{$index}.salle", $horaire->salle) }}" 
+                                               placeholder="Ex: Dojo A">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-white">Notes</label>
+                                        <input type="text" name="horaires[{{ $index }}][notes]" 
+                                               class="form-control" 
+                                               value="{{ old("horaires.{$index}.notes", $horaire->notes) }}" 
+                                               placeholder="Informations spécifiques à ce créneau...">
+                                    </div>
+                                </div>
+                                
+                                <div class="horaire-preview">
+                                    {{ $horaire->getHoraireComplet() }}
+                                    @if($horaire->salle)
+                                        - Salle: {{ $horaire->salle }}
+                                    @endif
+                                    @if($horaire->notes)
+                                        <br><small>{{ $horaire->notes }}</small>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
 
+                    @error('horaires')
+                        <div class="text-danger mt-2">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <!-- Autres champs du cours -->
+                <div class="row g-4">
                     <!-- Nombre de places -->
                     <div class="col-md-6">
                         <label for="places_max" class="form-label">
@@ -293,10 +455,14 @@
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="d-flex gap-3 justify-content-between">
-                            <div>
+                            <div class="d-flex gap-2">
                                 <button type="button" class="btn-secondary" onclick="showDuplicateModal()">
                                     <i class="fas fa-copy me-2"></i>
                                     Dupliquer pour une autre session
+                                </button>
+                                <button type="button" class="btn-info" onclick="previsualiserChangements()">
+                                    <i class="fas fa-eye me-2"></i>
+                                    Prévisualiser
                                 </button>
                             </div>
                             <div class="d-flex gap-3">
@@ -352,14 +518,8 @@
                             <i class="fas fa-calendar-check"></i>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-value">
-                                @if(is_array($cours->jours))
-                                    {{ count($cours->jours) }}
-                                @else
-                                    {{ count(json_decode($cours->jours, true) ?? []) }}
-                                @endif
-                            </div>
-                            <div class="stat-label">Jours par semaine</div>
+                            <div class="stat-value">{{ $cours->horaires->count() }}</div>
+                            <div class="stat-label">Plages horaires</div>
                         </div>
                     </div>
                 </div>
@@ -369,13 +529,8 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="stat-content">
-                            @php
-                                $debut = \Carbon\Carbon::createFromFormat('H:i', $cours->heure_debut);
-                                $fin = \Carbon\Carbon::createFromFormat('H:i', $cours->heure_fin);
-                                $duree = $fin->diffInMinutes($debut);
-                            @endphp
-                            <div class="stat-value">{{ $duree }}min</div>
-                            <div class="stat-label">Durée par séance</div>
+                            <div class="stat-value">{{ $cours->getDureeHebdomadaire() }}min</div>
+                            <div class="stat-label">Durée par semaine</div>
                         </div>
                     </div>
                 </div>
@@ -399,7 +554,7 @@
                 @csrf
                 <div class="modal-body">
                     <p class="text-white-50 mb-3">
-                        Sélectionnez la session de destination pour dupliquer ce cours avec tous ses paramètres.
+                        Sélectionnez la session de destination pour dupliquer ce cours avec tous ses horaires.
                     </p>
                     <div class="mb-3">
                         <label for="target_session_id" class="form-label text-white">Session de destination</label>
@@ -417,7 +572,7 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="copy_inscriptions" name="copy_inscriptions">
                         <label class="form-check-label text-white" for="copy_inscriptions">
-                            Copier également les inscriptions actuelles
+                            Copier également les inscriptions actuelles ({{ $cours->inscriptions->count() }} membre(s))
                         </label>
                     </div>
                 </div>
@@ -433,7 +588,278 @@
     </div>
 </div>
 
+<!-- Modale de prévisualisation -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-eye me-2"></i>
+                    Prévisualisation des modifications
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="preview-content"></div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let horaireIndex = {{ $cours->horaires->count() }};
+let originalData = @json($cours->horaires->map(function($h) { 
+    return [
+        'jour' => $h->jour,
+        'heure_debut' => $h->heure_debut,
+        'heure_fin' => $h->heure_fin,
+        'salle' => $h->salle,
+        'notes' => $h->notes
+    ];
+}));
+
+function ajouterHoraire() {
+    const container = document.getElementById('horaires-container');
+    const nouvelHoraire = document.createElement('div');
+    nouvelHoraire.className = 'horaire-item horaire-new';
+    nouvelHoraire.setAttribute('data-index', horaireIndex);
+    
+    nouvelHoraire.innerHTML = `
+        <div class="change-indicator">N</div>
+        <div class="horaire-header">
+            <div class="horaire-status">
+                <span class="horaire-title">Plage horaire #${horaireIndex + 1}</span>
+                <span class="badge badge-warning">Nouveau</span>
+            </div>
+            <button type="button" class="btn-remove-horaire" onclick="supprimerHoraire(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label text-white">Jour *</label>
+                <select name="horaires[${horaireIndex}][jour]" class="form-select" required>
+                    <option value="">Choisir</option>
+                    <option value="lundi">Lundi</option>
+                    <option value="mardi">Mardi</option>
+                    <option value="mercredi">Mercredi</option>
+                    <option value="jeudi">Jeudi</option>
+                    <option value="vendredi">Vendredi</option>
+                    <option value="samedi">Samedi</option>
+                    <option value="dimanche">Dimanche</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white">Heure début *</label>
+                <input type="time" name="horaires[${horaireIndex}][heure_debut]" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white">Heure fin *</label>
+                <input type="time" name="horaires[${horaireIndex}][heure_fin]" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white">Salle</label>
+                <input type="text" name="horaires[${horaireIndex}][salle]" class="form-control" placeholder="Ex: Dojo A">
+            </div>
+            <div class="col-12">
+                <label class="form-label text-white">Notes</label>
+                <input type="text" name="horaires[${horaireIndex}][notes]" class="form-control" 
+                       placeholder="Informations spécifiques à ce créneau...">
+            </div>
+        </div>
+        
+        <div class="horaire-preview" style="display: none;"></div>
+    `;
+    
+    container.appendChild(nouvelHoraire);
+    horaireIndex++;
+    
+    // Animation d'apparition
+    nouvelHoraire.style.opacity = '0';
+    nouvelHoraire.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+        nouvelHoraire.style.transition = 'all 0.3s ease';
+        nouvelHoraire.style.opacity = '1';
+        nouvelHoraire.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+function supprimerHoraire(button) {
+    const horaireItem = button.closest('.horaire-item');
+    horaireItem.style.transition = 'all 0.3s ease';
+    horaireItem.style.opacity = '0';
+    horaireItem.style.transform = 'translateX(-100%)';
+    
+    setTimeout(() => {
+        horaireItem.remove();
+        mettreAJourNumeros();
+    }, 300);
+}
+
+function mettreAJourNumeros() {
+    const horaires = document.querySelectorAll('.horaire-item');
+    horaires.forEach((horaire, index) => {
+        const titre = horaire.querySelector('.horaire-title');
+        titre.textContent = `Plage horaire #${index + 1}`;
+    });
+}
+
+function showDuplicateModal() {
+    const modal = new bootstrap.Modal(document.getElementById('duplicateModal'));
+    modal.show();
+}
+
+function previsualiserChangements() {
+    const content = document.getElementById('preview-content');
+    const formData = new FormData(document.getElementById('cours-form'));
+    
+    let previewHtml = '<h6 class="text-white mb-3">Résumé des modifications :</h6>';
+    
+    // Nom du cours
+    const nouveauNom = formData.get('nom');
+    if (nouveauNom !== '{{ $cours->nom }}') {
+        previewHtml += `<div class="alert alert-info">
+            <strong>Nom:</strong> {{ $cours->nom }} → ${nouveauNom}
+        </div>`;
+    }
+    
+    // Horaires
+    previewHtml += '<h6 class="text-white mt-3 mb-2">Horaires:</h6>';
+    const horaires = [];
+    for (let [key, value] of formData.entries()) {
+        if (key.startsWith('horaires[')) {
+            // Traiter les horaires...
+        }
+    }
+    
+    previewHtml += '<div class="alert alert-success">Prévisualisation générée</div>';
+    
+    content.innerHTML = previewHtml;
+    
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+// Validation en temps réel et détection des changements
+document.addEventListener('change', function(e) {
+    const target = e.target;
+    
+    if (target.matches('select[name*="[jour]"], input[name*="[heure_debut]"], input[name*="[heure_fin]"], input[name*="[salle]"], input[name*="[notes]"]')) {
+        const horaireItem = target.closest('.horaire-item');
+        const index = horaireItem.getAttribute('data-index');
+        
+        // Mettre à jour la prévisualisation
+        const jour = horaireItem.querySelector('select[name*="[jour]"]').value;
+        const debut = horaireItem.querySelector('input[name*="[heure_debut]"]').value;
+        const fin = horaireItem.querySelector('input[name*="[heure_fin]"]').value;
+        const salle = horaireItem.querySelector('input[name*="[salle]"]').value;
+        const notes = horaireItem.querySelector('input[name*="[notes]"]').value;
+        
+        const preview = horaireItem.querySelector('.horaire-preview');
+        
+        if (jour && debut && fin) {
+            const jourLabels = {
+                'lundi': 'Lundi', 'mardi': 'Mardi', 'mercredi': 'Mercredi',
+                'jeudi': 'Jeudi', 'vendredi': 'Vendredi', 'samedi': 'Samedi', 'dimanche': 'Dimanche'
+            };
+            
+            let previewText = `${jourLabels[jour]} de ${debut} à ${fin}`;
+            if (salle) previewText += ` - Salle: ${salle}`;
+            if (notes) previewText += `<br><small>${notes}</small>`;
+            
+            preview.innerHTML = previewText;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+        
+        // Détecter les changements pour les horaires existants
+        if (horaireItem.classList.contains('horaire-existing') && originalData[index]) {
+            const original = originalData[index];
+            const changed = (
+                jour !== original.jour ||
+                debut !== original.heure_debut ||
+                fin !== original.heure_fin ||
+                salle !== (original.salle || '') ||
+                notes !== (original.notes || '')
+            );
+            
+            if (changed) {
+                horaireItem.classList.remove('horaire-existing');
+                horaireItem.classList.add('horaire-modified');
+                
+                let indicator = horaireItem.querySelector('.change-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.className = 'change-indicator';
+                    indicator.textContent = 'M';
+                    horaireItem.appendChild(indicator);
+                }
+                
+                const badge = horaireItem.querySelector('.badge');
+                badge.className = 'badge badge-info';
+                badge.textContent = 'Modifié';
+            } else {
+                horaireItem.classList.remove('horaire-modified');
+                horaireItem.classList.add('horaire-existing');
+                
+                const indicator = horaireItem.querySelector('.change-indicator');
+                if (indicator) indicator.remove();
+                
+                const badge = horaireItem.querySelector('.badge');
+                badge.className = 'badge badge-success';
+                badge.textContent = 'Existant';
+            }
+        }
+    }
+});
+
+// Confirmation avant soumission si des changements importants
+document.getElementById('cours-form').addEventListener('submit', function(e) {
+    const hasModifiedHoraires = document.querySelectorAll('.horaire-modified, .horaire-new').length > 0;
+    const hasInscriptions = {{ $cours->inscriptions->count() }};
+    
+    if (hasModifiedHoraires && hasInscriptions > 0) {
+        if (!confirm(`Attention: Ce cours a ${hasInscriptions} inscription(s). Les modifications d'horaires peuvent affecter les membres inscrits. Continuer ?`)) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+
+<!-- Styles pour les badges et indicateurs -->
 <style>
+.badge-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+    color: #000;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
 /* Styles pour les statistiques */
 .stat-card {
     display: flex;
@@ -481,52 +907,5 @@
     color: rgba(255, 255, 255, 0.7);
     margin-top: 0.25rem;
 }
-
-/* Styles pour la modale Bootstrap */
-.modal-content {
-    background: #2c3e50 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-header {
-    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(220, 53, 69, 0.1));
-}
-
-.form-select {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-}
-
-.form-select:focus {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: #17a2b8;
-    color: #fff;
-    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
-}
-
-.form-select option {
-    background-color: #2c3e50;
-    color: #fff;
-}
-
-.form-check-input:checked {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-}
-
-.alert-info {
-    background: rgba(23, 162, 184, 0.1);
-    border: 1px solid rgba(23, 162, 184, 0.3);
-    color: #fff;
-    border-radius: 12px;
-}
 </style>
-
-<script>
-function showDuplicateModal() {
-    const modal = new bootstrap.Modal(document.getElementById('duplicateModal'));
-    modal.show();
-}
-</script>
 @endsection

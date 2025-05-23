@@ -141,8 +141,13 @@
                         </h5>
                         
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="active" name="active" 
-                                  {{ old('active', $ecole->active) ? 'checked' : '' }}>
+                            <input type="hidden" name="active" value="0">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="active" 
+                                   name="active" 
+                                   value="1"
+                                   {{ old('active', $ecole->active) ? 'checked' : '' }}>
                             <label class="form-check-label text-white" for="active">
                                 École active
                             </label>
@@ -199,7 +204,6 @@
                 </form>
             </div>
             
-            <!-- Zone de danger -->
             @if(auth()->user()->isSuperAdmin())
             <div class="ecole-container mt-4 fade-in">
                 <div class="form-header">
@@ -219,7 +223,7 @@
                                 Cette opération est irréversible.
                             </p>
                             <form action="{{ route('ecoles.destroy', $ecole->id) }}" method="POST" class="d-inline" 
-                                  data-confirm="ATTENTION : Vous êtes sur le point de supprimer l'école '{{ $ecole->nom }}' et potentiellement toutes ses données associées (membres, cours, sessions, etc.). Cette action est IRRÉVERSIBLE. Êtes-vous absolument certain de vouloir procéder ?">
+                                  onsubmit="return confirm('ATTENTION : Vous êtes sur le point de supprimer l\'école \'{{ $ecole->nom }}\' et potentiellement toutes ses données associées. Cette action est IRRÉVERSIBLE. Êtes-vous absolument certain de vouloir procéder ?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger">
@@ -232,54 +236,26 @@
                     
                     <div class="col-md-6">
                         <div class="danger-card p-3 mb-3" style="background-color: rgba(255, 193, 7, 0.1); border-radius: 10px; border: 1px solid rgba(255, 193, 7, 0.2);">
-                            <h6 class="text-warning mb-3">Désactiver cette école</h6>
+                            <h6 class="text-warning mb-3">{{ $ecole->active ? 'Désactiver' : 'Réactiver' }} cette école</h6>
                             <p class="text-muted mb-3">
-                                Au lieu de supprimer l'école, vous pouvez simplement la désactiver. 
-                                Les données seront conservées mais l'école ne sera plus accessible.
+                                {{ $ecole->active ? 'Désactiver l\'école la rendra inaccessible mais conservera les données.' : 'Réactiver l\'école la rendra à nouveau accessible.' }}
                             </p>
-                            @if($ecole->active)
                             <form action="{{ route('ecoles.toggle-status', $ecole->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('PUT')
-                                <button type="submit" class="btn btn-warning">
-                                    <i class="fas fa-ban me-2"></i>
-                                    Désactiver l'école
+                                <button type="submit" class="btn {{ $ecole->active ? 'btn-warning' : 'btn-success' }}">
+                                    <i class="fas {{ $ecole->active ? 'fa-ban' : 'fa-check-circle' }} me-2"></i>
+                                    {{ $ecole->active ? 'Désactiver' : 'Réactiver' }} l'école
                                 </button>
                             </form>
-                            @else
-                            <form action="{{ route('ecoles.toggle-status', $ecole->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                @method('PUT')
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    Réactiver l'école
-                                </button>
-                            </form>
-                            @endif
                         </div>
                     </div>
                 </div>
             </div>
             @endif
             
-            <!-- Espace supplémentaire pour éviter que le footer chevauche le contenu -->
             <div class="mb-large"></div>
         </div>
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Confirmation pour les suppressions et actions dangereuses
-    $('form[data-confirm]').on('submit', function(e) {
-        const message = $(this).data('confirm') || 'Êtes-vous sûr de vouloir effectuer cette action ?';
-        if (!confirm(message)) {
-            e.preventDefault();
-            return false;
-        }
-    });
-});
-</script>
-@endpush

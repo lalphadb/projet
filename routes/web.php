@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CoursController;
 use App\Http\Controllers\CoursSessionController;
+use App\Http\Controllers\ReinscriptionController;
 use App\Http\Controllers\EcolesController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MembresController;
@@ -17,27 +18,31 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\ActivationController;
 use App\Http\Controllers\SeminaireController;
 
-// ---------------------
-// Routes publiques
-// ---------------------
+// =============================================
+// ROUTES PUBLIQUES
+// =============================================
 Route::get('/', fn() => redirect()->route('login'));
 Route::view('/politique-confidentialite', 'politique')->name('politique');
+
+// Activation des comptes
 Route::get('/activer-compte', [ActivationController::class, 'index'])->name('activation.index');
 Route::post('/activer-compte', [ActivationController::class, 'store'])->name('activation.store');
 
-// ---------------------
-// Dashboard sécurisé (email vérifié)
-// ---------------------
+// =============================================
+// DASHBOARD SÉCURISÉ (Email vérifié)
+// =============================================
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
-// ---------------------
-// Routes protégées par authentification
-// ---------------------
+// =============================================
+// ROUTES PROTÉGÉES PAR AUTHENTIFICATION  
+// =============================================
 Route::middleware(['auth'])->group(function () {
 
-    // Fiche personnelle (Mon compte)
+    // -------------------------------------------
+    // PROFIL MEMBRE - Mon Compte
+    // -------------------------------------------
     Route::get('/mon-compte', function () {
         $membre = Auth::user()->membre;
 
@@ -52,26 +57,31 @@ Route::middleware(['auth'])->group(function () {
         return view('mon-compte', compact('membre', 'ceintures', 'seminaires', 'cours'));
     })->name('mon-compte');
 
-    // Membres
+    // -------------------------------------------
+    // GESTION DES MEMBRES
+    // -------------------------------------------
     Route::resource('membres', MembresController::class)->names('membres');
     Route::get('/membres/attente', [MembresController::class, 'attente'])->name('membres.attente');
     Route::post('/membres/{id}/approuver', [MembresController::class, 'approuver'])
         ->whereNumber('id')->name('membres.approuver');
 
-    // Séminaires associés à un membre
+    // Séminaires - Association membre
     Route::post('/membres/{membre}/seminaire', [MembresController::class, 'ajouterSeminaire'])
         ->name('membres.seminaire.inscrire');
     Route::delete('/membres/{membre}/seminaire/{seminaire}', [MembresController::class, 'retirerSeminaire'])
         ->name('membres.seminaire.retirer');
 
-    // Ceintures associées à un membre
+    // Ceintures - Association membre
     Route::post('/membres/{membre}/ceinture', [MembresController::class, 'ajouterCeinture'])
         ->name('membres.ceinture.ajouter');
     Route::delete('/membres/{membre}/ceinture/{ceinture}', [MembresController::class, 'retirerCeinture'])
         ->name('membres.ceinture.retirer');
 
-    // Cours et Sessions - Structure complète
+    // -------------------------------------------
+    // GESTION DES COURS ET SESSIONS
+    // -------------------------------------------
     Route::prefix('cours')->name('cours.')->group(function () {
+        
         // Routes principales pour les cours
         Route::get('/', [CoursController::class, 'index'])->name('index');
         Route::get('/create', [CoursController::class, 'create'])->name('create');
@@ -81,20 +91,23 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{cours}', [CoursController::class, 'update'])->name('update');
         Route::delete('/{cours}', [CoursController::class, 'destroy'])->name('destroy');
 
-        // Routes pour la duplication de cours
+        // Duplication de cours
         Route::post('/{cours}/duplicate', [CoursController::class, 'duplicate'])->name('duplicate');
         
-        // Routes pour les inscriptions
+        // Gestion des inscriptions aux cours
         Route::get('/{cours}/inscriptions', [CoursController::class, 'inscriptions'])->name('inscriptions');
         Route::post('/{cours}/inscriptions', [CoursController::class, 'storeInscription'])->name('inscriptions.store');
         Route::delete('/{cours}/inscriptions/{inscription}', [CoursController::class, 'destroyInscription'])->name('inscriptions.destroy');
         Route::patch('/inscriptions/{inscription}/statut', [CoursController::class, 'updateInscriptionStatut'])->name('inscriptions.statut');
         
-        // Route pour réinscription automatique
+        // Réinscription automatique
         Route::post('/{cours}/reinscription-auto', [CoursController::class, 'reinscriptionAuto'])->name('reinscription.auto');
         
-        // Routes sessions (préfixe sessions)
+        // -------------------------------------------
+        // SOUS-MODULE : SESSIONS
+        // -------------------------------------------
         Route::prefix('sessions')->name('sessions.')->group(function () {
+            // CRUD Sessions
             Route::get('/', [CoursSessionController::class, 'index'])->name('index');
             Route::get('/create', [CoursSessionController::class, 'create'])->name('create');
             Route::post('/', [CoursSessionController::class, 'store'])->name('store');
@@ -103,15 +116,35 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{session}', [CoursSessionController::class, 'update'])->name('update');
             Route::delete('/{session}', [CoursSessionController::class, 'destroy'])->name('destroy');
             
-            // Route pour génération automatique des sessions
+            // Génération automatique des sessions
             Route::post('/generate', [CoursSessionController::class, 'generateSessions'])->name('generate');
+            
+            // 🆕 NOUVELLES FONCTIONNALITÉS - Duplication et Réinscriptions
+            Route::post('/{session}/dupliquer', [CoursSessionController::class, 'dupliquer'])->name('dupliquer');
+            Route::patch('/{session}/activer-reinscriptions', [CoursSessionController::class, 'activerReinscriptions'])->name('activer-reinscriptions');
+            Route::patch('/{session}/fermer-reinscriptions', [CoursSessionController::class, 'fermerReinscriptions'])->name('fermer-reinscriptions');
         });
     });
+
+    // -------------------------------------------
+    // MODULE RÉINSCRIPTION MEMBRE
+    // -------------------------------------------
+    Route::prefix('reinscription')->name('reinscription.')->group(function () {
+        Route::get('/', [ReinscriptionController::class, 'index'])->name('index');
+        Route::post('/confirmer', [ReinscriptionController::class, 'confirmer'])->name('confirmer');
+        Route::post('/annuler', [ReinscriptionController::class, 'annuler'])->name('annuler');
+    });
     
-    // Écoles
+    // -------------------------------------------
+    // GESTION DES ÉCOLES
+    // -------------------------------------------
     Route::resource('ecoles', EcolesController::class)->names('ecoles');
     Route::put('ecoles/{ecole}/toggle-status', [EcolesController::class, 'toggleStatus'])->name('ecoles.toggle-status');
 
+    // -------------------------------------------
+    // GESTION DES PRÉSENCES
+    // -------------------------------------------
+    
     // Présences - CRUD Administratif
     Route::resource('presences', PresencesController::class)->names('presences');
 
@@ -123,51 +156,67 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/cours/{cours}/rapport', [PresenceInstantaneeController::class, 'voir'])->name('voir');
     });
 
+    // -------------------------------------------
+    // AUTRES MODULES
+    // -------------------------------------------
+    
     // Portes ouvertes
     Route::resource('portes-ouvertes', PortesOuvertesController::class)->names('portes-ouvertes');
-
-    // Séminaires
-    Route::resource('seminaires', SeminaireController::class)->names('seminaires');
-
+    
     // Journées portes ouvertes
     Route::resource('journees-portes-ouvertes', JourneePortesOuvertesController::class)
         ->names('journees-portes-ouvertes');
 
-    // Export PDF / Excel
-    Route::get('/export/membres/excel', [ExportController::class, 'exportMembresExcel'])
-        ->name('export.membres.excel');
-    Route::get('/export/membres/pdf', [ExportController::class, 'exportMembresPdf'])
-        ->name('export.membres.pdf');
+    // Séminaires
+    Route::resource('seminaires', SeminaireController::class)->names('seminaires');
 
-    // Profil utilisateur
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // -------------------------------------------
+    // EXPORTS (PDF / Excel)
+    // -------------------------------------------
+    Route::prefix('export')->name('export.')->group(function () {
+        Route::get('/membres/excel', [ExportController::class, 'exportMembresExcel'])->name('membres.excel');
+        Route::get('/membres/pdf', [ExportController::class, 'exportMembresPdf'])->name('membres.pdf');
+    });
 
-    // Gestion des utilisateurs (admin & superadmin)
+    // -------------------------------------------
+    // PROFIL UTILISATEUR
+    // -------------------------------------------
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+        Route::patch('/', [ProfileController::class, 'update'])->name('update');
+        Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+    });
+
+    // -------------------------------------------
+    // GESTION DES UTILISATEURS (Admin & SuperAdmin)
+    // -------------------------------------------
     Route::middleware(['checkrole:admin,superadmin'])->prefix('users')->name('users.')->group(function () {
+        // CRUD Utilisateurs
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/store', [UserController::class, 'store'])->name('store');
-        Route::get('/promote', [UserController::class, 'promote'])->name('promote');
-        Route::post('/promote', [UserController::class, 'promoteStore'])->name('promote.store');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::patch('/{user}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         
-        // Routes manquantes - AJOUT ICI
+        // Fonctions avancées utilisateurs
+        Route::get('/promote', [UserController::class, 'promote'])->name('promote');
+        Route::post('/promote', [UserController::class, 'promoteStore'])->name('promote.store');
         Route::put('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
         Route::put('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
     });
 
-    // Middleware de test
+    // -------------------------------------------
+    // ROUTE DE TEST (Middleware)
+    // -------------------------------------------
     Route::get('/test-checkrole', fn() => "✅ Middleware 'checkrole' chargé et fonctionnel.")
         ->middleware('checkrole:admin,superladmin');
 });
 
-
-// Route de test temporaire
+// =============================================
+// ROUTE DE TEST TEMPORAIRE (À SUPPRIMER EN PROD)
+// =============================================
 Route::get('/test-login', function() {
     $user = \App\Models\User::where('email', 'test@test.ca')->first();
     if ($user && \Hash::check('AdminPass123', $user->password)) {
@@ -176,5 +225,8 @@ Route::get('/test-login', function() {
     }
     return "Échec du test de connexion";
 });
-// Auth Laravel Breeze / Fortify
+
+// =============================================
+// ROUTES D'AUTHENTIFICATION (Laravel Breeze/Fortify)
+// =============================================
 require __DIR__.'/auth.php';

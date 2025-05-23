@@ -4,10 +4,90 @@
 
 @push('styles')
 <link href="{{ asset('css/cours.css') }}" rel="stylesheet">
-@endpush
+<style>
+/* Styles pour les horaires multiples */
+.horaires-container {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
 
-@push('scripts')
-<script src="{{ asset('js/cours.js') }}"></script>
+.horaire-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.horaire-item:last-child {
+    margin-bottom: 0;
+}
+
+.horaire-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.horaire-title {
+    color: #17a2b8;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.btn-remove-horaire {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-remove-horaire:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+.btn-add-horaire {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-add-horaire:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.horaire-preview {
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    color: #17a2b8;
+    font-weight: 500;
+}
+</style>
 @endpush
 
 @section('content')
@@ -43,8 +123,8 @@
                                class="form-control @error('nom') is-invalid @enderror" 
                                id="nom" 
                                name="nom" 
-                               value="{{ old('nom') }}" 
-                               placeholder="Ex: Yoga débutant, Pilates avancé..."
+                               value="{{ old('nom', $coursOriginal->nom ?? '') }}" 
+                               placeholder="Ex: Karaté débutant, Judo avancé..."
                                required>
                         @error('nom')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -63,7 +143,8 @@
                                 required>
                             <option value="">Sélectionner une session</option>
                             @foreach($sessions as $session)
-                                <option value="{{ $session->id }}" {{ old('session_id') == $session->id ? 'selected' : '' }}>
+                                <option value="{{ $session->id }}" 
+                                        {{ old('session_id', $coursOriginal->session_id ?? '') == $session->id ? 'selected' : '' }}>
                                     {{ $session->nom }} ({{ $session->mois }})
                                 </option>
                             @endforeach
@@ -83,80 +164,132 @@
                                   id="description" 
                                   name="description" 
                                   rows="4" 
-                                  placeholder="Décrivez le cours, les objectifs, le niveau requis...">{{ old('description') }}</textarea>
+                                  placeholder="Décrivez le cours, les objectifs, le niveau requis...">{{ old('description', $coursOriginal->description ?? '') }}</textarea>
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                </div>
 
-                    <!-- Jours de la semaine -->
-                    <div class="col-12">
-                        <label class="form-label">
-                            <i class="fas fa-calendar-week me-2"></i>
-                            Jours de cours *
-                        </label>
-                        <div class="jours-selector">
-                            @php
-                                $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-                                $joursLabels = [
-                                    'lundi' => 'Lundi',
-                                    'mardi' => 'Mardi', 
-                                    'mercredi' => 'Mercredi',
-                                    'jeudi' => 'Jeudi',
-                                    'vendredi' => 'Vendredi',
-                                    'samedi' => 'Samedi',
-                                    'dimanche' => 'Dimanche'
-                                ];
-                            @endphp
-                            @foreach($jours as $jour)
-                                <label class="jour-checkbox">
-                                    <input type="checkbox" 
-                                           name="jours[]" 
-                                           value="{{ $jour }}" 
-                                           {{ (is_array(old('jours')) && in_array($jour, old('jours'))) ? 'checked' : '' }}>
-                                    <span>{{ $joursLabels[$jour] }}</span>
-                                </label>
+                <!-- SECTION HORAIRES MULTIPLES -->
+                <div class="horaires-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-white mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Plages Horaires *
+                        </h5>
+                        <button type="button" class="btn-add-horaire" onclick="ajouterHoraire()">
+                            <i class="fas fa-plus"></i>
+                            Ajouter une plage
+                        </button>
+                    </div>
+
+                    <div id="horaires-container">
+                        @if($coursOriginal && $coursOriginal->horaires->count() > 0)
+                            @foreach($coursOriginal->horaires as $index => $horaire)
+                                <div class="horaire-item" data-index="{{ $index }}">
+                                    <div class="horaire-header">
+                                        <span class="horaire-title">Plage horaire #{{ $index + 1 }}</span>
+                                        @if($index > 0)
+                                            <button type="button" class="btn-remove-horaire" onclick="supprimerHoraire(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Jour *</label>
+                                            <select name="horaires[{{ $index }}][jour]" class="form-select" required>
+                                                <option value="">Choisir</option>
+                                                <option value="lundi" {{ $horaire->jour == 'lundi' ? 'selected' : '' }}>Lundi</option>
+                                                <option value="mardi" {{ $horaire->jour == 'mardi' ? 'selected' : '' }}>Mardi</option>
+                                                <option value="mercredi" {{ $horaire->jour == 'mercredi' ? 'selected' : '' }}>Mercredi</option>
+                                                <option value="jeudi" {{ $horaire->jour == 'jeudi' ? 'selected' : '' }}>Jeudi</option>
+                                                <option value="vendredi" {{ $horaire->jour == 'vendredi' ? 'selected' : '' }}>Vendredi</option>
+                                                <option value="samedi" {{ $horaire->jour == 'samedi' ? 'selected' : '' }}>Samedi</option>
+                                                <option value="dimanche" {{ $horaire->jour == 'dimanche' ? 'selected' : '' }}>Dimanche</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Heure début *</label>
+                                            <input type="time" name="horaires[{{ $index }}][heure_debut]" 
+                                                   class="form-control" value="{{ $horaire->heure_debut }}" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Heure fin *</label>
+                                            <input type="time" name="horaires[{{ $index }}][heure_fin]" 
+                                                   class="form-control" value="{{ $horaire->heure_fin }}" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-white">Salle</label>
+                                            <input type="text" name="horaires[{{ $index }}][salle]" 
+                                                   class="form-control" value="{{ $horaire->salle }}" 
+                                                   placeholder="Ex: Dojo A">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label text-white">Notes</label>
+                                            <input type="text" name="horaires[{{ $index }}][notes]" 
+                                                   class="form-control" value="{{ $horaire->notes }}" 
+                                                   placeholder="Informations spécifiques à ce créneau...">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="horaire-preview" style="display: none;"></div>
+                                </div>
                             @endforeach
-                        </div>
-                        @error('jours')
-                            <div class="text-danger mt-2">{{ $message }}</div>
-                        @enderror
-                        <div class="jours-preview"></div>
+                        @else
+                            <!-- Premier horaire par défaut -->
+                            <div class="horaire-item" data-index="0">
+                                <div class="horaire-header">
+                                    <span class="horaire-title">Plage horaire #1</span>
+                                </div>
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Jour *</label>
+                                        <select name="horaires[0][jour]" class="form-select" required>
+                                            <option value="">Choisir</option>
+                                            <option value="lundi">Lundi</option>
+                                            <option value="mardi">Mardi</option>
+                                            <option value="mercredi">Mercredi</option>
+                                            <option value="jeudi">Jeudi</option>
+                                            <option value="vendredi">Vendredi</option>
+                                            <option value="samedi">Samedi</option>
+                                            <option value="dimanche">Dimanche</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Heure début *</label>
+                                        <input type="time" name="horaires[0][heure_debut]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Heure fin *</label>
+                                        <input type="time" name="horaires[0][heure_fin]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-white">Salle</label>
+                                        <input type="text" name="horaires[0][salle]" class="form-control" placeholder="Ex: Dojo A">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-white">Notes</label>
+                                        <input type="text" name="horaires[0][notes]" class="form-control" 
+                                               placeholder="Informations spécifiques à ce créneau...">
+                                    </div>
+                                </div>
+                                
+                                <div class="horaire-preview" style="display: none;"></div>
+                            </div>
+                        @endif
                     </div>
 
-                    <!-- Horaires -->
-                    <div class="col-md-6">
-                        <label for="heure_debut" class="form-label">
-                            <i class="fas fa-clock me-2"></i>
-                            Heure de début *
-                        </label>
-                        <input type="time" 
-                               class="form-control @error('heure_debut') is-invalid @enderror" 
-                               id="heure_debut" 
-                               name="heure_debut" 
-                               value="{{ old('heure_debut') }}" 
-                               required>
-                        @error('heure_debut')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @error('horaires')
+                        <div class="text-danger mt-2">{{ $message }}</div>
+                    @enderror
+                </div>
 
-                    <div class="col-md-6">
-                        <label for="heure_fin" class="form-label">
-                            <i class="fas fa-clock me-2"></i>
-                            Heure de fin *
-                        </label>
-                        <input type="time" 
-                               class="form-control @error('heure_fin') is-invalid @enderror" 
-                               id="heure_fin" 
-                               name="heure_fin" 
-                               value="{{ old('heure_fin') }}" 
-                               required>
-                        @error('heure_fin')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
+                <!-- Autres champs du cours -->
+                <div class="row g-4">
                     <!-- Nombre de places -->
                     <div class="col-md-6">
                         <label for="places_max" class="form-label">
@@ -167,17 +300,16 @@
                                class="form-control @error('places_max') is-invalid @enderror" 
                                id="places_max" 
                                name="places_max" 
-                               value="{{ old('places_max', 20) }}" 
+                               value="{{ old('places_max', $coursOriginal->places_max ?? 20) }}" 
                                min="1" 
                                max="100" 
                                required>
                         @error('places_max')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                        <small class="text-muted">Entre 1 et 100 places</small>
                     </div>
 
-                    <!-- Instructeur (optionnel) -->
+                    <!-- Instructeur -->
                     <div class="col-md-6">
                         <label for="instructeur" class="form-label">
                             <i class="fas fa-chalkboard-teacher me-2"></i>
@@ -187,14 +319,14 @@
                                class="form-control @error('instructeur') is-invalid @enderror" 
                                id="instructeur" 
                                name="instructeur" 
-                               value="{{ old('instructeur') }}" 
+                               value="{{ old('instructeur', $coursOriginal->instructeur ?? '') }}" 
                                placeholder="Nom de l'instructeur">
                         @error('instructeur')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <!-- Niveau (optionnel) -->
+                    <!-- Niveau -->
                     <div class="col-md-6">
                         <label for="niveau" class="form-label">
                             <i class="fas fa-layer-group me-2"></i>
@@ -204,17 +336,17 @@
                                 id="niveau" 
                                 name="niveau">
                             <option value="">Sélectionner un niveau</option>
-                            <option value="debutant" {{ old('niveau') == 'debutant' ? 'selected' : '' }}>Débutant</option>
-                            <option value="intermediaire" {{ old('niveau') == 'intermediaire' ? 'selected' : '' }}>Intermédiaire</option>
-                            <option value="avance" {{ old('niveau') == 'avance' ? 'selected' : '' }}>Avancé</option>
-                            <option value="tous_niveaux" {{ old('niveau') == 'tous_niveaux' ? 'selected' : '' }}>Tous niveaux</option>
+                            <option value="debutant" {{ old('niveau', $coursOriginal->niveau ?? '') == 'debutant' ? 'selected' : '' }}>Débutant</option>
+                            <option value="intermediaire" {{ old('niveau', $coursOriginal->niveau ?? '') == 'intermediaire' ? 'selected' : '' }}>Intermédiaire</option>
+                            <option value="avance" {{ old('niveau', $coursOriginal->niveau ?? '') == 'avance' ? 'selected' : '' }}>Avancé</option>
+                            <option value="tous_niveaux" {{ old('niveau', $coursOriginal->niveau ?? '') == 'tous_niveaux' ? 'selected' : '' }}>Tous niveaux</option>
                         </select>
                         @error('niveau')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <!-- Tarif (optionnel) -->
+                    <!-- Tarif -->
                     <div class="col-md-6">
                         <label for="tarif" class="form-label">
                             <i class="fas fa-dollar-sign me-2"></i>
@@ -225,7 +357,7 @@
                                    class="form-control @error('tarif') is-invalid @enderror" 
                                    id="tarif" 
                                    name="tarif" 
-                                   value="{{ old('tarif') }}" 
+                                   value="{{ old('tarif', $coursOriginal->tarif ?? '') }}" 
                                    step="0.01" 
                                    min="0" 
                                    placeholder="0.00">
@@ -254,94 +386,117 @@
                 </div>
             </form>
         </div>
-
-        <!-- Aide contextuelle -->
-        <div class="form-container">
-            <h5 class="mb-3">
-                <i class="fas fa-info-circle me-2 text-info"></i>
-                Aide pour créer un cours
-            </h5>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="help-card">
-                        <h6><i class="fas fa-lightbulb me-2"></i>Conseils pour le nom</h6>
-                        <ul class="mb-0">
-                            <li>Soyez spécifique (ex: "Yoga Hatha débutant")</li>
-                            <li>Mentionnez le niveau si pertinent</li>
-                            <li>Gardez un nom court et descriptif</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="help-card">
-                        <h6><i class="fas fa-calendar me-2"></i>Planification</h6>
-                        <ul class="mb-0">
-                            <li>Choisissez des créneaux récurrents</li>
-                            <li>Prévoyez du temps pour l'installation</li>
-                            <li>Considérez les pauses entre cours</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
-<style>
-/* Styles spécifiques pour le formulaire */
-.help-card {
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    height: 100%;
+<script>
+let horaireIndex = {{ $coursOriginal && $coursOriginal->horaires->count() > 0 ? $coursOriginal->horaires->count() : 1 }};
+
+function ajouterHoraire() {
+    const container = document.getElementById('horaires-container');
+    const nouvelHoraire = document.createElement('div');
+    nouvelHoraire.className = 'horaire-item';
+    nouvelHoraire.setAttribute('data-index', horaireIndex);
+    
+    nouvelHoraire.innerHTML = `
+        <div class="horaire-header">
+            <span class="horaire-title">Plage horaire #${horaireIndex + 1}</span>
+            <button type="button" class="btn-remove-horaire" onclick="supprimerHoraire(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label text-white">Jour *</label>
+                <select name="horaires[${horaireIndex}][jour]" class="form-select" required>
+                    <option value="">Choisir</option>
+                    <option value="lundi">Lundi</option>
+                    <option value="mardi">Mardi</option>
+                    <option value="mercredi">Mercredi</option>
+                    <option value="jeudi">Jeudi</option>
+                    <option value="vendredi">Vendredi</option>
+                    <option value="samedi">Samedi</option>
+                    <option value="dimanche">Dimanche</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white">Heure début *</label>
+                <input type="time" name="horaires[${horaireIndex}][heure_debut]" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white">Heure fin *</label>
+                <input type="time" name="horaires[${horaireIndex}][heure_fin]" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white">Salle</label>
+                <input type="text" name="horaires[${horaireIndex}][salle]" class="form-control" placeholder="Ex: Dojo A">
+            </div>
+            <div class="col-12">
+                <label class="form-label text-white">Notes</label>
+                <input type="text" name="horaires[${horaireIndex}][notes]" class="form-control" 
+                       placeholder="Informations spécifiques à ce créneau...">
+            </div>
+        </div>
+        
+        <div class="horaire-preview" style="display: none;"></div>
+    `;
+    
+    container.appendChild(nouvelHoraire);
+    horaireIndex++;
+    
+    // Animation d'apparition
+    nouvelHoraire.style.opacity = '0';
+    nouvelHoraire.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+        nouvelHoraire.style.transition = 'all 0.3s ease';
+        nouvelHoraire.style.opacity = '1';
+        nouvelHoraire.style.transform = 'translateY(0)';
+    }, 10);
 }
 
-.help-card h6 {
-    color: #17a2b8;
-    margin-bottom: 1rem;
-    font-weight: 600;
+function supprimerHoraire(button) {
+    const horaireItem = button.closest('.horaire-item');
+    horaireItem.style.transition = 'all 0.3s ease';
+    horaireItem.style.opacity = '0';
+    horaireItem.style.transform = 'translateX(-100%)';
+    
+    setTimeout(() => {
+        horaireItem.remove();
+        mettreAJourNumeros();
+    }, 300);
 }
 
-.help-card ul {
-    color: rgba(255, 255, 255, 0.8);
-    list-style: none;
-    padding: 0;
+function mettreAJourNumeros() {
+    const horaires = document.querySelectorAll('.horaire-item');
+    horaires.forEach((horaire, index) => {
+        const titre = horaire.querySelector('.horaire-title');
+        titre.textContent = `Plage horaire #${index + 1}`;
+    });
 }
 
-.help-card li {
-    margin-bottom: 0.5rem;
-    padding-left: 1.5rem;
-    position: relative;
-}
-
-.help-card li::before {
-    content: "→";
-    position: absolute;
-    left: 0;
-    color: #17a2b8;
-    font-weight: bold;
-}
-
-.input-group-text {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.invalid-feedback {
-    color: #dc3545;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-.is-invalid {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
-}
-
-.text-danger {
-    color: #dc3545 !important;
-}
-</style>
+// Validation en temps réel
+document.addEventListener('change', function(e) {
+    if (e.target.matches('select[name*="[jour]"], input[name*="[heure_debut]"], input[name*="[heure_fin]"]')) {
+        const horaireItem = e.target.closest('.horaire-item');
+        const jour = horaireItem.querySelector('select[name*="[jour]"]').value;
+        const debut = horaireItem.querySelector('input[name*="[heure_debut]"]').value;
+        const fin = horaireItem.querySelector('input[name*="[heure_fin]"]').value;
+        
+        const preview = horaireItem.querySelector('.horaire-preview');
+        
+        if (jour && debut && fin) {
+            const jourLabels = {
+                'lundi': 'Lundi', 'mardi': 'Mardi', 'mercredi': 'Mercredi',
+                'jeudi': 'Jeudi', 'vendredi': 'Vendredi', 'samedi': 'Samedi', 'dimanche': 'Dimanche'
+            };
+            
+            preview.textContent = `${jourLabels[jour]} de ${debut} à ${fin}`;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+});
+</script>
 @endsection

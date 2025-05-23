@@ -140,8 +140,13 @@
                         </h5>
                         
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="active" name="active" 
-                                  {{ old('active', '1') == '1' ? 'checked' : '' }}>
+                            <input type="hidden" name="active" value="0">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="active" 
+                                   name="active" 
+                                   value="1"
+                                   {{ old('active', true) ? 'checked' : '' }}>
                             <label class="form-check-label text-white" for="active">
                                 École active
                             </label>
@@ -163,7 +168,6 @@
                 </form>
             </div>
             
-            <!-- Espace supplémentaire pour éviter que le footer chevauche le contenu -->
             <div class="mb-large"></div>
         </div>
     </div>

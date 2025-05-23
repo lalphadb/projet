@@ -2,446 +2,402 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cours;
-use App\Models\Ecole;
 use App\Models\CoursSession;
-use App\Models\Membre;
-use App\Models\InscriptionCours;
+use App\Models\Ecole;
+use App\Models\Cours;
+use App\Models\CoursHoraire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
-class CoursController extends Controller
+class CoursController extends Controller 
 {
     /**
-     * Affiche la liste des cours avec filtres et pagination
+     * Affiche la liste des sessions
      */
     public function index(Request $request)
     {
         $user = Auth::user();
         
-        // Query de base selon le rôle
-        $query = Cours::with(['ecole', 'session', 'inscriptions.membre']);
+        // Query de base avec les relations
+        $query = CoursSession::with(['ecole', 'cours', 'cours.inscriptions'])
+            ->withCount('cours');
         
+        // Filtre par école pour admin
         if ($user->role !== 'superadmin') {
             $query->where('ecole_id', $user->ecole_id);
         }
         
-        // Filtres
+        // Filtres supplémentaires
         if ($request->filled('ecole_id') && $request->ecole_id !== 'all') {
             $query->where('ecole_id', $request->ecole_id);
         }
         
-        if ($request->filled('session_id') && $request->session_id !== 'all') {
-            $query->where('session_id', $request->session_id);
+        if ($request->filled('annee') && $request->annee !== 'all') {
+            $query->whereYear('date_debut', $request->annee)
+                  ->orWhereYear('date_fin', $request->annee);
         }
         
-        if ($request->filled('jour') && $request->jour !== 'all') {
-            $query->whereJsonContains('jours', $request->jour);
+        if ($request->filled('saison') && $request->saison !== 'all') {
+            $query->where('nom', 'like', '%' . ucfirst($request->saison) . '%');
         }
         
         // Tri
-        $sortField = $request->get('sort', 'nom');
-        $sortDirection = $request->get('direction', 'asc');
+        $sortField = $request->get('sort', 'date_debut');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
         
-        if ($sortField === 'session') {
-            $query->join('cours_sessions', 'cours.session_id', '=', 'cours_sessions.id')
-                  ->orderBy('cours_sessions.nom', $sortDirection)
-                  ->select('cours.*');
-        } else {
-            $query->orderBy($sortField, $sortDirection);
-        }
+        $sessions = $query->paginate(10);
         
-        $cours = $query->paginate(15);
-        
-        // Données pour les filtres
+        // Données pour filtres
         $ecoles = $user->role === 'superadmin' 
             ? Ecole::orderBy('nom')->get() 
             : collect();
-            
-        $sessions = $user->role === 'superadmin'
-            ? CoursSession::orderBy('nom')->get()
-            : CoursSession::where('ecole_id', $user->ecole_id)->orderBy('nom')->get();
         
-        return view('cours.index', compact('cours', 'ecoles', 'sessions'));
+        return view('cours.sessions.index', compact('sessions', 'ecoles'));
     }
 
     /**
-     * Affiche le formulaire de création
+     * Affiche le formulaire de création d'une session
      */
     public function create()
     {
-        $user = Auth::user();
-        
-        // Sessions disponibles pour l'école
-        $sessions = $user->role === 'superadmin'
-            ? CoursSession::orderBy('nom')->get()
-            : CoursSession::where('ecole_id', $user->ecole_id)->orderBy('nom')->get();
-            
-        return view('cours.create', compact('sessions'));
+        return view('cours.sessions.create');
     }
 
     /**
-     * Enregistre un nouveau cours
+     * Enregistre une nouvelle session
      */
     public function store(Request $request)
     {
         $user = Auth::user();
-
+        
         $request->validate([
             'nom' => 'required|string|max:255',
+            'mois' => 'nullable|string|max:50',
+            'date_debut' => 'required|date',
+            'date_fin' => 'required|date|after:date_debut',
             'description' => 'nullable|string',
-            'jours' => 'required|array|min:1',
-            'jours.*' => 'in:lundi,mardi,mercredi,jeudi,vendredi,samedi,dimanche',
-            'heure_debut' => 'required|date_format:H:i',
-            'heure_fin' => 'required|date_format:H:i|after:heure_debut',
-            'places_max' => 'required|integer|min:1|max:100',
-            'session_id' => 'required|exists:cours_sessions,id',
-            'instructeur' => 'nullable|string|max:255',
-            'niveau' => 'nullable|in:debutant,intermediaire,avance,tous_niveaux',
-            'tarif' => 'nullable|numeric|min:0',
+            'activer_inscriptions' => 'nullable|boolean',
+            'visible_public' => 'nullable|boolean',
+            'date_limite_inscription' => 'nullable|date',
+            'couleur' => 'nullable|string|max:7',
         ]);
-
-        $cours = new Cours();
-        $cours->nom = $request->nom;
-        $cours->description = $request->description;
-        $cours->jours = json_encode($request->jours);
-        $cours->heure_debut = $request->heure_debut;
-        $cours->heure_fin = $request->heure_fin;
-        $cours->places_max = $request->places_max;
-        $cours->session_id = $request->session_id;
-        $cours->instructeur = $request->instructeur;
-        $cours->niveau = $request->niveau;
-        $cours->tarif = $request->tarif;
-        $cours->ecole_id = $user->role === 'superadmin' 
-            ? CoursSession::find($request->session_id)->ecole_id
-            : $user->ecole_id;
-        $cours->save();
-
-        Log::info("Cours créé : {$cours->nom} par user #{$user->id}");
-
-        return redirect()->route('cours.index')->with('success', 'Cours créé avec succès.');
+        
+        $session = new CoursSession();
+        $session->nom = $request->nom;
+        $session->mois = $request->mois;
+        $session->date_debut = $request->date_debut;
+        $session->date_fin = $request->date_fin;
+        $session->description = $request->description;
+        $session->inscriptions_actives = $request->activer_inscriptions ?? true;
+        $session->visible = $request->visible_public ?? true;
+        $session->date_limite_inscription = $request->date_limite_inscription;
+        $session->couleur = $request->couleur;
+        $session->ecole_id = $user->ecole_id;
+        $session->save();
+        
+        Log::info("Session créée : {$session->nom} par user #{$user->id}");
+        
+        return redirect()->route('cours.sessions.index')->with('success', 'Session créée avec succès.');
     }
 
     /**
-     * Affiche les détails d'un cours
+     * Affiche les détails d'une session
      */
-    public function show(Cours $cours)
+    public function show(CoursSession $session)
     {
         $user = Auth::user();
         
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
             abort(403);
         }
         
-        $cours->load(['ecole', 'session', 'inscriptions.membre']);
+        $session->load(['ecole', 'cours.horaires', 'cours.inscriptions']);
         
-        return view('cours.show', compact('cours'));
+        // Données statistiques
+        $totalInscrits = $session->cours->sum(function($cours) {
+            return $cours->inscriptions->count();
+        });
+        
+        $totalPlaces = $session->cours->sum('places_max');
+        $tauxRemplissage = $totalPlaces > 0 ? round(($totalInscrits / $totalPlaces) * 100) : 0;
+        
+        return view('cours.sessions.show', compact('session', 'totalInscrits', 'tauxRemplissage'));
     }
 
     /**
      * Affiche le formulaire d'édition
      */
-    public function edit(Cours $cours)
+    public function edit(CoursSession $session)
     {
         $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
+        
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
             abort(403);
         }
-
-        $sessions = $user->role === 'superadmin'
-            ? CoursSession::orderBy('nom')->get()
-            : CoursSession::where('ecole_id', $user->ecole_id)->orderBy('nom')->get();
-
-        return view('cours.edit', compact('cours', 'sessions'));
+        
+        return view('cours.sessions.edit', compact('session'));
     }
 
     /**
-     * Met à jour un cours
+     * Met à jour une session
      */
-    public function update(Request $request, Cours $cours)
+    public function update(Request $request, CoursSession $session)
     {
         $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
+        
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
             abort(403);
         }
-
+        
         $request->validate([
             'nom' => 'required|string|max:255',
+            'mois' => 'nullable|string|max:50',
+            'date_debut' => 'required|date',
+            'date_fin' => 'required|date|after:date_debut',
             'description' => 'nullable|string',
-            'jours' => 'required|array|min:1',
-            'jours.*' => 'in:lundi,mardi,mercredi,jeudi,vendredi,samedi,dimanche',
-            'heure_debut' => 'required|date_format:H:i',
-            'heure_fin' => 'required|date_format:H:i|after:heure_debut',
-            'places_max' => 'required|integer|min:' . $cours->inscriptions->count() . '|max:100',
-            'session_id' => 'required|exists:cours_sessions,id',
-            'instructeur' => 'nullable|string|max:255',
-            'niveau' => 'nullable|in:debutant,intermediaire,avance,tous_niveaux',
-            'tarif' => 'nullable|numeric|min:0',
-            'statut' => 'nullable|in:actif,inactif,complet,annule',
+            'activer_inscriptions' => 'nullable|boolean',
+            'visible_public' => 'nullable|boolean',
+            'date_limite_inscription' => 'nullable|date',
+            'couleur' => 'nullable|string|max:7',
         ]);
-
-        $cours->update([
+        
+        $session->update([
             'nom' => $request->nom,
+            'mois' => $request->mois,
+            'date_debut' => $request->date_debut,
+            'date_fin' => $request->date_fin,
             'description' => $request->description,
-            'jours' => json_encode($request->jours),
-            'heure_debut' => $request->heure_debut,
-            'heure_fin' => $request->heure_fin,
-            'places_max' => $request->places_max,
-            'session_id' => $request->session_id,
-            'instructeur' => $request->instructeur,
-            'niveau' => $request->niveau,
-            'tarif' => $request->tarif,
-            'statut' => $request->statut ?? 'actif',
+            'inscriptions_actives' => $request->activer_inscriptions ?? true,
+            'visible' => $request->visible_public ?? true,
+            'date_limite_inscription' => $request->date_limite_inscription,
+            'couleur' => $request->couleur,
         ]);
-
-        Log::info("Cours modifié : {$cours->nom} par user #{$user->id}");
-
-        return redirect()->route('cours.index')->with('success', 'Cours modifié avec succès.');
+        
+        Log::info("Session modifiée : {$session->nom} par user #{$user->id}");
+        
+        return redirect()->route('cours.sessions.index')->with('success', 'Session modifiée avec succès.');
     }
 
     /**
-     * Supprime un cours
+     * Supprime une session
      */
-    public function destroy(Cours $cours)
+    public function destroy(CoursSession $session)
     {
         $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
+        
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
             abort(403);
         }
-
-        // Supprimer les inscriptions associées
-        $cours->inscriptions()->delete();
-        $cours->delete();
-
-        Log::info("Cours supprimé : {$cours->nom} par user #{$user->id}");
-
-        return redirect()->route('cours.index')->with('success', 'Cours supprimé avec succès.');
+        
+        // Vérifier si des cours sont liés
+        if ($session->cours()->exists()) {
+            return back()->with('error', 'Impossible de supprimer cette session car elle contient des cours.');
+        }
+        
+        $session->delete();
+        
+        Log::info("Session supprimée : {$session->nom} par user #{$user->id}");
+        
+        return redirect()->route('cours.sessions.index')->with('success', 'Session supprimée avec succès.');
     }
 
     /**
-     * Duplique un cours pour une autre session
+     * Génère automatiquement les sessions pour une année
      */
-    public function duplicate(Request $request, Cours $cours)
+    public function generateSessions(Request $request)
     {
         $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
-            abort(403);
-        }
-
+        
         $request->validate([
-            'target_session_id' => 'required|exists:cours_sessions,id',
-            'copy_inscriptions' => 'nullable|boolean',
+            'year' => 'required|integer|min:2020|max:2040',
+            'sessions' => 'required|array|min:1',
+            'sessions.*' => 'in:hiver,printemps,ete,automne',
+        ]);
+        
+        $year = $request->year;
+        $ecoleId = $user->ecole_id;
+        $sessionsCreees = 0;
+        
+        // Définition des sessions standards
+        $sessionsData = [
+            'hiver' => [
+                'nom' => "Hiver $year",
+                'mois' => 'Jan-Mar',
+                'date_debut' => "$year-01-01",
+                'date_fin' => "$year-03-31",
+            ],
+            'printemps' => [
+                'nom' => "Printemps $year",
+                'mois' => 'Avr-Juin',
+                'date_debut' => "$year-04-01",
+                'date_fin' => "$year-06-30",
+            ],
+            'ete' => [
+                'nom' => "Été $year",
+                'mois' => 'Juil-Sep',
+                'date_debut' => "$year-07-01",
+                'date_fin' => "$year-09-30",
+            ],
+            'automne' => [
+                'nom' => "Automne $year",
+                'mois' => 'Oct-Déc',
+                'date_debut' => "$year-10-01",
+                'date_fin' => "$year-12-31",
+            ],
+        ];
+        
+        foreach ($request->sessions as $session) {
+            // Vérifier si cette session existe déjà
+            $sessionExiste = CoursSession::where('ecole_id', $ecoleId)
+                ->where('nom', $sessionsData[$session]['nom'])
+                ->exists();
+                
+            if (!$sessionExiste) {
+                // Créer la session
+                CoursSession::create([
+                    'ecole_id' => $ecoleId,
+                    'nom' => $sessionsData[$session]['nom'],
+                    'mois' => $sessionsData[$session]['mois'],
+                    'date_debut' => $sessionsData[$session]['date_debut'],
+                    'date_fin' => $sessionsData[$session]['date_fin'],
+                    'inscriptions_actives' => true,
+                    'visible' => true,
+                    'couleur' => '#17a2b8',
+                ]);
+                
+                $sessionsCreees++;
+            }
+        }
+        
+        Log::info("$sessionsCreees sessions générées automatiquement pour l'année $year par user #{$user->id}");
+        
+        return redirect()->route('cours.sessions.index')
+            ->with('success', "$sessionsCreees session(s) générée(s) avec succès pour l'année $year.");
+    }
+
+    /**
+     * 🆕 NOUVEAU : Duplique une session avec tous ses cours et horaires
+     */
+    public function dupliquer(Request $request, CoursSession $session)
+    {
+        $user = Auth::user();
+        
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
+            abort(403);
+        }
+        
+        $request->validate([
+            'nouveau_nom' => 'required|string|max:255',
+            'nouveau_mois' => 'nullable|string|max:50',
+            'nouvelle_date_debut' => 'required|date',
+            'nouvelle_date_fin' => 'required|date|after:nouvelle_date_debut',
+            'copier_cours' => 'nullable|boolean',
+            'activer_reinscriptions' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
         try {
-            $nouveauCours = $cours->replicate();
-            $nouveauCours->session_id = $request->target_session_id;
-            $nouveauCours->save();
+            // Créer la nouvelle session
+            $nouvelleSession = CoursSession::create([
+                'ecole_id' => $session->ecole_id,
+                'nom' => $request->nouveau_nom,
+                'mois' => $request->nouveau_mois,
+                'date_debut' => $request->nouvelle_date_debut,
+                'date_fin' => $request->nouvelle_date_fin,
+                'description' => $session->description,
+                'inscriptions_actives' => $request->activer_reinscriptions ?? false,
+                'visible' => true,
+                'couleur' => $session->couleur,
+            ]);
 
-            // Copier les inscriptions si demandé
-            if ($request->copy_inscriptions) {
-                foreach ($cours->inscriptions as $inscription) {
-                    InscriptionCours::create([
-                        'membre_id' => $inscription->membre_id,
-                        'cours_id' => $nouveauCours->id,
-                        'session_id' => $request->target_session_id,
+            $coursCreates = 0;
+            
+            // Copier tous les cours si demandé
+            if ($request->copier_cours) {
+                foreach ($session->cours as $cours) {
+                    // Dupliquer le cours
+                    $nouveauCours = Cours::create([
+                        'nom' => $cours->nom,
+                        'description' => $cours->description,
+                        'session_id' => $nouvelleSession->id,
+                        'ecole_id' => $cours->ecole_id,
+                        'instructeur' => $cours->instructeur,
+                        'niveau' => $cours->niveau,
+                        'tarif' => $cours->tarif,
+                        'places_max' => $cours->places_max,
+                        'date_debut' => $nouvelleSession->date_debut,
+                        'date_fin' => $nouvelleSession->date_fin,
                         'statut' => 'actif',
                     ]);
+
+                    // Dupliquer les horaires
+                    foreach ($cours->horaires as $horaire) {
+                        CoursHoraire::create([
+                            'cours_id' => $nouveauCours->id,
+                            'jour' => $horaire->jour,
+                            'heure_debut' => $horaire->heure_debut,
+                            'heure_fin' => $horaire->heure_fin,
+                            'salle' => $horaire->salle,
+                            'notes' => $horaire->notes,
+                            'active' => true,
+                        ]);
+                    }
+                    
+                    $coursCreates++;
                 }
             }
 
             DB::commit();
-            Log::info("Cours dupliqué : {$cours->nom} vers session #{$request->target_session_id} par user #{$user->id}");
-
-            return redirect()->route('cours.index')->with('success', 'Cours dupliqué avec succès.');
+            
+            Log::info("Session dupliquée : {$session->nom} vers {$nouvelleSession->nom} avec {$coursCreates} cours par user #{$user->id}");
+            
+            return redirect()->route('cours.sessions.show', $nouvelleSession)
+                ->with('success', "Session dupliquée avec succès ! {$coursCreates} cours ont été copiés.");
+                
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Erreur lors de la duplication du cours.');
+            Log::error("Erreur duplication session : " . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la duplication de la session.');
         }
     }
 
     /**
-     * Affiche la page de gestion des inscriptions
+     * 🆕 NOUVEAU : Active les réinscriptions pour une session
      */
-    public function inscriptions(Cours $cours)
+    public function activerReinscriptions(CoursSession $session)
     {
         $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
-            abort(403);
-        }
-
-        $cours->load(['ecole', 'session']);
         
-        // Membres inscrits
-        $membresInscrits = InscriptionCours::with('membre')
-            ->where('cours_id', $cours->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Membres disponibles (non inscrits)
-        $membresInscritsIds = $membresInscrits->pluck('membre_id')->toArray();
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
+            abort(403);
+        }
         
-        $membresDisponibles = Membre::where('ecole_id', $cours->ecole_id)
-            ->whereNotIn('id', $membresInscritsIds)
-            ->where('statut', 'actif')
-            ->orderBy('nom')
-            ->orderBy('prenom')
-            ->get();
-
-        // Session suivante pour réinscription
-        $sessionSuivante = CoursSession::where('ecole_id', $cours->ecole_id)
-            ->where('date_debut', '>', $cours->session->date_fin)
-            ->orderBy('date_debut')
-            ->first();
-
-        return view('cours.inscriptions', compact('cours', 'membresInscrits', 'membresDisponibles', 'sessionSuivante'));
+        $session->update(['inscriptions_actives' => true]);
+        
+        Log::info("Réinscriptions activées pour session {$session->nom} par user #{$user->id}");
+        
+        return back()->with('success', 'Réinscriptions activées ! Les membres peuvent maintenant se réinscrire.');
     }
 
     /**
-     * Inscrit un membre à un cours
+     * 🆕 NOUVEAU : Ferme les réinscriptions pour une session
      */
-    public function storeInscription(Request $request, Cours $cours)
+    public function fermerReinscriptions(CoursSession $session)
     {
         $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
+        
+        if ($user->role !== 'superadmin' && $session->ecole_id !== $user->ecole_id) {
             abort(403);
         }
-
-        $request->validate([
-            'membre_id' => 'required|exists:membres,id',
-        ]);
-
-        // Vérifier les places disponibles
-        if ($cours->inscriptions->count() >= $cours->places_max) {
-            return back()->with('error', 'Plus de places disponibles pour ce cours.');
-        }
-
-        // Vérifier que le membre n'est pas déjà inscrit
-        if (InscriptionCours::where('cours_id', $cours->id)->where('membre_id', $request->membre_id)->exists()) {
-            return back()->with('error', 'Ce membre est déjà inscrit à ce cours.');
-        }
-
-        InscriptionCours::create([
-            'membre_id' => $request->membre_id,
-            'cours_id' => $cours->id,
-            'session_id' => $cours->session_id,
-            'statut' => 'actif',
-        ]);
-
-        Log::info("Inscription ajoutée : Membre #{$request->membre_id} au cours #{$cours->id} par user #{$user->id}");
-
-        return back()->with('success', 'Membre inscrit avec succès.');
-    }
-
-    /**
-     * Désinscrit un membre d'un cours
-     */
-    public function destroyInscription(Cours $cours, InscriptionCours $inscription)
-    {
-        $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
-            abort(403);
-        }
-
-        $inscription->delete();
-
-        Log::info("Inscription supprimée : Membre #{$inscription->membre_id} du cours #{$cours->id} par user #{$user->id}");
-
-        return back()->with('success', 'Membre désinscrit avec succès.');
-    }
-
-    /**
-     * Met à jour le statut d'une inscription
-     */
-    public function updateInscriptionStatut(Request $request, InscriptionCours $inscription)
-    {
-        $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $inscription->cours->ecole_id !== $user->ecole_id) {
-            abort(403);
-        }
-
-        $request->validate([
-            'statut' => 'required|in:actif,en_attente,suspendu,annule',
-            'raison' => 'nullable|string|max:500',
-        ]);
-
-        $inscription->update([
-            'statut' => $request->statut,
-            'raison_changement' => $request->raison,
-        ]);
-
-        Log::info("Statut inscription modifié : #{$inscription->id} -> {$request->statut} par user #{$user->id}");
-
-        return back()->with('success', 'Statut de l\'inscription mis à jour.');
-    }
-
-    /**
-     * Réinscription automatique pour la session suivante
-     */
-    public function reinscriptionAuto(Request $request, Cours $cours)
-    {
-        $user = Auth::user();
-
-        if ($user->role !== 'superadmin' && $cours->ecole_id !== $user->ecole_id) {
-            abort(403);
-        }
-
-        $request->validate([
-            'session_destination_id' => 'required|exists:cours_sessions,id',
-            'membres' => 'required|array|min:1',
-            'membres.*' => 'exists:membres,id',
-        ]);
-
-        DB::beginTransaction();
-        try {
-            // Trouver ou créer le cours équivalent dans la nouvelle session
-            $nouveauCours = Cours::where('nom', $cours->nom)
-                ->where('session_id', $request->session_destination_id)
-                ->where('jours', $cours->jours)
-                ->where('heure_debut', $cours->heure_debut)
-                ->where('heure_fin', $cours->heure_fin)
-                ->first();
-
-            if (!$nouveauCours) {
-                // Créer le cours automatiquement
-                $nouveauCours = $cours->replicate();
-                $nouveauCours->session_id = $request->session_destination_id;
-                $nouveauCours->save();
-            }
-
-            // Réinscrire les membres sélectionnés
-            $inscriptionsCreees = 0;
-            foreach ($request->membres as $membreId) {
-                // Vérifier que le membre n'est pas déjà inscrit
-                if (!InscriptionCours::where('cours_id', $nouveauCours->id)->where('membre_id', $membreId)->exists()) {
-                    InscriptionCours::create([
-                        'membre_id' => $membreId,
-                        'cours_id' => $nouveauCours->id,
-                        'session_id' => $request->session_destination_id,
-                        'statut' => 'actif',
-                    ]);
-                    $inscriptionsCreees++;
-                }
-            }
-
-            DB::commit();
-            Log::info("Réinscription automatique : {$inscriptionsCreees} membres pour cours #{$nouveauCours->id} par user #{$user->id}");
-
-            return back()->with('success', "{$inscriptionsCreees} membre(s) réinscrit(s) avec succès.");
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Erreur lors de la réinscription automatique.');
-        }
+        
+        $session->update(['inscriptions_actives' => false]);
+        
+        Log::info("Réinscriptions fermées pour session {$session->nom} par user #{$user->id}");
+        
+        return back()->with('success', 'Réinscriptions fermées pour cette session.');
     }
 }
