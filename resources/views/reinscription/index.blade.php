@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends("layouts.admin")
 
 @section('title', 'Réinscription - ' . $membre->prenom . ' ' . $membre->nom)
 

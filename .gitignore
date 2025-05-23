@@ -32,3 +32,11 @@ yarn-error.log
 # Uploads
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# Sauvegardes
+*.zip
+*.sql
+.env
+/public/css_backup/
+/public/js_backup/
+/arborescence.txt

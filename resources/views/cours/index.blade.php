@@ -1,487 +1,364 @@
 @extends('layouts.admin')
 
-@section('title', 'Liste des cours')
+@section('title', 'Gestion des cours')
 
 @push('styles')
-<link href="{{ asset('css/cours.css') }}" rel="stylesheet">
-<style>
-/* Styles pour les horaires multiples */
-.horaires-multiples {
-    display: flex;
-    flex-direction: column;  
-    gap: 0.25rem;
-}
-
-.horaire-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.85rem;
-}
-
-.jour {
-    color: #17a2b8;
-    font-weight: 600;
-    min-width: 60px;
-}
-
-.heure {
-    color: #fff;
-    font-weight: 500;
-}
-
-.salle {
-    color: rgba(255, 255, 255, 0.7);
-    font-style: italic;
-}
-
-.horaires-plus {
-    margin-top: 0.25rem;
-    text-align: center;
-}
-
-.cours-schedule {
-    min-width: 140px;
-}
-
-/* Indicateur de cours avec horaires multiples */
-.cours-multiples-badge {
-    background: linear-gradient(45deg, #28a745, #20c997);
-    color: white;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    display: inline-block;
-    margin-top: 0.25rem;
-}
-</style>
-@endpush
-
-@push('scripts')
-<script src="{{ asset('js/cours.js') }}"></script>
+<link href="{{ asset('css/cours/sessions-duplication.css') }}" rel="stylesheet">
+<link href="{{ asset('css/reinscription/reinscription.css') }}" rel="stylesheet">
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    <div class="cours-list-container">
-        <!-- En-tête moderne -->
-        <div class="cours-header">
-            <div class="cours-title">
-                <div class="title-content">
-                    <i class="fas fa-graduation-cap"></i>
-                    Gestion des cours
-                    @if($cours->total() > 0)
-                        <span class="cours-count">{{ $cours->total() }} cours</span>
-                    @endif
+<div class="container-fluid py-4">
+    <!-- Header avec filtres -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <div>
+                    <h1 class="h2 mb-1" style="color: #e2e8f0;">
+                        <i class="fas fa-dumbbell me-2"></i>
+                        Gestion des cours
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {{ $cours->total() }} cours total{{ $cours->total() > 1 ? 's' : '' }}
+                        @auth
+                            @if(auth()->user()->role !== 'superadmin')
+                                - {{ auth()->user()->ecole->nom ?? 'École' }}
+                            @else
+                                - Toutes les écoles
+                            @endif
+                        @endauth
+                    </p>
                 </div>
-                @if(auth()->user()->role !== 'superadmin' || auth()->user()->role === 'admin')
-                    <a href="{{ route('cours.create') }}" class="btn-add-cours">
-                        <i class="fas fa-plus me-2"></i>
-                        Ajouter un cours
-                    </a>
-                @endif
             </div>
         </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ route('cours.create') }}" class="btn btn-success-gradient">
+                <i class="fas fa-plus me-2"></i>
+                Nouveau cours
+            </a>
+            <a href="{{ route('cours.sessions.index') }}" class="btn btn-outline-info ms-2">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Sessions
+            </a>
+        </div>
+    </div>
 
-        <!-- Section de filtres -->
-        <div class="filters-section">
-            <form method="GET" action="{{ route('cours.index') }}" class="filter-form">
-                @if(auth()->user()->role === 'superadmin')
-                    <div class="filter-group">
-                        <label class="filter-label">Filtrer par école</label>
-                        <select name="ecole_id" class="filter-select">
-                            <option value="all">Toutes les écoles</option>
-                            @foreach($ecoles as $ecole)
-                                <option value="{{ $ecole->id }}" {{ request('ecole_id') == $ecole->id ? 'selected' : '' }}>
-                                    {{ $ecole->nom }}
-                                    @if($ecole->ville)
-                                        ({{ $ecole->ville }})
-                                    @endif
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-                
-                <div class="filter-group">
-                    <label class="filter-label">Filtrer par session</label>
-                    <select name="session_id" class="filter-select">
-                        <option value="all">Toutes les sessions</option>
-                        @foreach($sessions as $session)
-                            <option value="{{ $session->id }}" {{ request('session_id') == $session->id ? 'selected' : '' }}>
-                                {{ $session->nom }} ({{ $session->mois }})
+    <!-- Filtres -->
+    <div class="card mb-4" style="background: rgba(26, 54, 93, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);">
+        <div class="card-body">
+            <form method="GET" action="{{ route('cours.index') }}" class="row g-3">
+                <!-- Filtre École -->
+                @if(auth()->user()->role === 'superadmin' && $ecoles->count() > 0)
+                <div class="col-md-3">
+                    <label for="ecole_id" class="form-label" style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem;">
+                        École
+                    </label>
+                    <select class="form-control" id="ecole_id" name="ecole_id" 
+                            style="background: rgba(45, 55, 72, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); color: #e2e8f0;">
+                        <option value="all">Toutes les écoles</option>
+                        @foreach($ecoles as $ecole)
+                            <option value="{{ $ecole->id }}" {{ request('ecole_id') == $ecole->id ? 'selected' : '' }}
+                                    style="background: rgba(45, 55, 72, 1);">
+                                {{ $ecole->nom }}
                             </option>
                         @endforeach
                     </select>
                 </div>
-                
-                <div class="filter-group">
-                    <label class="filter-label">Filtrer par jour</label>
-                    <select name="jour" class="filter-select">
-                        <option value="all">Tous les jours</option>
-                        <option value="lundi" {{ request('jour') == 'lundi' ? 'selected' : '' }}>Lundi</option>
-                        <option value="mardi" {{ request('jour') == 'mardi' ? 'selected' : '' }}>Mardi</option>
-                        <option value="mercredi" {{ request('jour') == 'mercredi' ? 'selected' : '' }}>Mercredi</option>
-                        <option value="jeudi" {{ request('jour') == 'jeudi' ? 'selected' : '' }}>Jeudi</option>
-                        <option value="vendredi" {{ request('jour') == 'vendredi' ? 'selected' : '' }}>Vendredi</option>
-                        <option value="samedi" {{ request('jour') == 'samedi' ? 'selected' : '' }}>Samedi</option>
-                        <option value="dimanche" {{ request('jour') == 'dimanche' ? 'selected' : '' }}>Dimanche</option>
+                @endif
+
+                <!-- Filtre Session -->
+                @if($sessions->count() > 0)
+                <div class="col-md-3">
+                    <label for="session_id" class="form-label" style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem;">
+                        Session
+                    </label>
+                    <select class="form-control" id="session_id" name="session_id"
+                            style="background: rgba(45, 55, 72, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); color: #e2e8f0;">
+                        <option value="all">Toutes les sessions</option>
+                        @foreach($sessions as $session)
+                            <option value="{{ $session->id }}" {{ request('session_id') == $session->id ? 'selected' : '' }}
+                                    style="background: rgba(45, 55, 72, 1);">
+                                {{ $session->nom }}
+                                @if($session->inscriptions_actives)
+                                    ●
+                                @endif
+                            </option>
+                        @endforeach
                     </select>
                 </div>
-                
-                <div>
-                    <button type="submit" class="btn-filter">
-                        <i class="fas fa-filter me-1"></i>
-                        Filtrer
-                    </button>
+                @endif
+
+                <!-- Filtre Jour -->
+                <div class="col-md-2">
+                    <label for="jour" class="form-label" style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem;">
+                        Jour
+                    </label>
+                    <select class="form-control" id="jour" name="jour"
+                            style="background: rgba(45, 55, 72, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); color: #e2e8f0;">
+                        <option value="all">Tous les jours</option>
+                        @foreach(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'] as $jour)
+                            <option value="{{ $jour }}" {{ request('jour') == $jour ? 'selected' : '' }}
+                                    style="background: rgba(45, 55, 72, 1);">
+                                {{ ucfirst($jour) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Tri -->
+                <div class="col-md-2">
+                    <label for="sort" class="form-label" style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem;">
+                        Trier par
+                    </label>
+                    <select class="form-control" id="sort" name="sort"
+                            style="background: rgba(45, 55, 72, 0.8); border: 1px solid rgba(255, 255, 255, 0.2); color: #e2e8f0;">
+                        <option value="nom" {{ request('sort') == 'nom' ? 'selected' : '' }} style="background: rgba(45, 55, 72, 1);">Nom</option>
+                        <option value="session" {{ request('sort') == 'session' ? 'selected' : '' }} style="background: rgba(45, 55, 72, 1);">Session</option>
+                        <option value="places_max" {{ request('sort') == 'places_max' ? 'selected' : '' }} style="background: rgba(45, 55, 72, 1);">Places</option>
+                        <option value="created_at" {{ request('sort') == 'created_at' ? 'selected' : '' }} style="background: rgba(45, 55, 72, 1);">Date création</option>
+                    </select>
+                </div>
+
+                <!-- Boutons -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <a href="{{ route('cours.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>
+    </div>
 
-        <!-- Tableau des cours -->
-        <div class="cours-table-container">
-            @if($cours->count())
-                <div class="table-responsive">
-                    <table class="cours-table table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                @php $dir = request('direction') === 'asc' ? 'desc' : 'asc'; @endphp
-                                <th>
-                                    <a href="{{ route('cours.index', array_merge(request()->except('page'), ['sort' => 'nom', 'direction' => $dir])) }}">
-                                        Nom du cours
-                                        {!! request('sort') === 'nom' ? ($dir === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>') : '<i class="fas fa-sort text-muted"></i>' !!}
-                                    </a>
-                                </th>
-                                <th>Horaires</th>
-                                <th>
-                                    <a href="{{ route('cours.index', array_merge(request()->except('page'), ['sort' => 'session', 'direction' => $dir])) }}">
-                                        Session
-                                        {!! request('sort') === 'session' ? ($dir === 'asc' ? '<i class="fas fa-sort-up"></i>' : '<i class="fas fa-sort-down"></i>') : '<i class="fas fa-sort text-muted"></i>' !!}
-                                    </a>
-                                </th>
-                                <th>Places</th>
-                                @if(auth()->user()->role === 'superadmin')
-                                    <th>École</th>
-                                @endif
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($cours as $coursItem)
-                                <tr data-cours-id="{{ $coursItem->id }}">
-                                    <td>
-                                        <span class="cours-id">#{{ $coursItem->id }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="cours-name">{{ $coursItem->nom }}</div>
-                                        @if($coursItem->description)
-                                            <div class="cours-description">{{ Str::limit($coursItem->description, 50) }}</div>
-                                        @endif
-                                        @if($coursItem->niveau)
-                                            <span class="badge badge-modern niveau-{{ $coursItem->niveau }}">
-                                                {{ ucfirst($coursItem->niveau) }}
+    <!-- Liste des cours -->
+    @if($cours->count() > 0)
+        <div class="row">
+            @foreach($cours as $coursItem)
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="cours-card h-100" style="background: rgba(26, 54, 93, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; backdrop-filter: blur(15px); transition: all 0.3s ease;" data-statut="{{ $coursItem->statut }}">
+                        <!-- Header de la carte -->
+                        <div class="card-header" style="background: rgba(45, 55, 72, 0.6); border-bottom: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px 15px 0 0; padding: 20px;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-1" style="color: #e2e8f0; font-weight: 600;">
+                                        {{ $coursItem->nom }}
+                                    </h5>
+                                    @if($coursItem->session)
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge px-2 py-1" 
+                                                  style="background: {{ $coursItem->session->inscriptions_actives ? 'linear-gradient(135deg, #48bb78, #38b2ac)' : 'linear-gradient(135deg, #a0aec0, #718096)' }};">
+                                                {{ $coursItem->session->nom }}
                                             </span>
-                                        @endif
-                                        @if($coursItem->instructeur)
-                                            <div class="cours-instructeur">
-                                                <i class="fas fa-chalkboard-teacher me-1"></i>
-                                                {{ $coursItem->instructeur }}
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="cours-schedule">
-                                            @if($coursItem->horairesActifs && $coursItem->horairesActifs->count() > 0)
-                                                <div class="horaires-multiples">
-                                                    @foreach($coursItem->horairesActifs->take(2) as $horaire)
-                                                        <div class="horaire-item">
-                                                            <span class="jour">{{ $horaire->getJourFormate() }}</span>
-                                                            <span class="heure">{{ $horaire->getHoraireFormate() }}</span>
-                                                            @if($horaire->salle)
-                                                                <small class="salle">({{ $horaire->salle }})</small>
-                                                            @endif
-                                                        </div>
-                                                    @endforeach
-                                                    @if($coursItem->horairesActifs->count() > 2)
-                                                        <div class="horaires-plus">
-                                                            <small class="text-info">+{{ $coursItem->horairesActifs->count() - 2 }} autre(s)</small>
-                                                        </div>
-                                                    @endif
-                                                    @if($coursItem->horairesActifs->count() > 1)
-                                                        <span class="cours-multiples-badge">
-                                                            {{ $coursItem->horairesActifs->count() }} créneaux
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @else
-                                                {{-- Fallback pour anciens cours --}}
-                                                <div class="cours-days">
-                                                    @if(is_array($coursItem->jours))
-                                                        {{ implode(', ', array_map('ucfirst', $coursItem->jours)) }}
-                                                    @else
-                                                        {{ $coursItem->getJoursFormateLegacy() }}
-                                                    @endif
-                                                </div>
-                                                @if($coursItem->heure_debut && $coursItem->heure_fin)
-                                                    <div class="cours-time">
-                                                        {{ $coursItem->heure_debut }} - {{ $coursItem->heure_fin }}
-                                                    </div>
-                                                @endif
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if($coursItem->session)
-                                            <span class="cours-session">{{ $coursItem->session->nom }}</span>
-                                            @if($coursItem->session->mois)
-                                                <div class="session-periode">{{ $coursItem->session->mois }}</div>
-                                            @endif
-                                        @else
-                                            <span class="text-muted">Non assigné</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="cours-places">
-                                            @php
-                                                $inscrits = $coursItem->inscriptions->count();
-                                                $disponibles = $coursItem->places_max - $inscrits;
-                                                $percentage = $coursItem->places_max > 0 ? ($disponibles / $coursItem->places_max) * 100 : 0;
-                                            @endphp
-                                            <div class="places-info">
-                                                <span class="places-disponibles 
-                                                    @if($percentage <= 10) places-danger
-                                                    @elseif($percentage <= 25) places-warning
-                                                    @endif">
-                                                    {{ $disponibles }}
-                                                </span>
-                                                <span class="places-total">/ {{ $coursItem->places_max }}</span>
-                                            </div>
-                                            <div class="places-bar">
-                                                <div class="places-fill" style="width: {{ 100 - $percentage }}%"></div>
-                                            </div>
-                                            @if($coursItem->getDureeHebdomadaire && $coursItem->getDureeHebdomadaire() > 0)
-                                                <small class="duree-info">
-                                                    {{ $coursItem->getDureeHebdomadaire() }}min/semaine
+                                            @if($coursItem->session->inscriptions_actives)
+                                                <small class="text-success ms-2">
+                                                    <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
+                                                    Réinscriptions ouvertes
                                                 </small>
                                             @endif
                                         </div>
-                                    </td>
-                                    @if(auth()->user()->role === 'superadmin')
-                                        <td>
-                                            @if($coursItem->ecole)
-                                                <span class="cours-school">{{ $coursItem->ecole->nom }}</span>
-                                            @else
-                                                <span class="text-muted">Non assigné</span>
-                                            @endif
-                                        </td>
                                     @endif
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="{{ route('cours.show', $coursItem) }}" 
-                                               class="btn-action btn-action-view action-tooltip" 
-                                               data-tooltip="Voir le cours">
-                                                <i class="fas fa-eye"></i>
+                                </div>
+                                
+                                <!-- Statut du cours -->
+                                <div class="text-end">
+                                    @if($coursItem->statut === 'actif')
+                                        <span class="badge bg-success px-3 py-2">
+                                            <i class="fas fa-check-circle me-1"></i>Actif
+                                        </span>
+                                    @elseif($coursItem->statut === 'complet')
+                                        <span class="badge bg-warning px-3 py-2">
+                                            <i class="fas fa-users me-1"></i>Complet
+                                        </span>
+                                    @elseif($coursItem->statut === 'inactif')
+                                        <span class="badge bg-secondary px-3 py-2">
+                                            <i class="fas fa-pause me-1"></i>Inactif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger px-3 py-2">
+                                            <i class="fas fa-times-circle me-1"></i>{{ ucfirst($coursItem->statut) }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Corps de la carte -->
+                        <div class="card-body" style="padding: 20px;">
+                            <!-- Informations du cours -->
+                            <div class="cours-details mb-3">
+                                @if($coursItem->instructeur)
+                                    <div class="cours-detail mb-2">
+                                        <i class="fas fa-user-tie me-2" style="color: #667eea; width: 16px;"></i>
+                                        <span style="color: #a0aec0;">{{ $coursItem->instructeur }}</span>
+                                    </div>
+                                @endif
+
+                                @if($coursItem->niveau)
+                                    <div class="cours-detail mb-2">
+                                        <i class="fas fa-layer-group me-2" style="color: #667eea; width: 16px;"></i>
+                                        <span style="color: #a0aec0;">{{ ucfirst(str_replace('_', ' ', $coursItem->niveau)) }}</span>
+                                    </div>
+                                @endif
+
+                                @if($coursItem->tarif)
+                                    <div class="cours-detail mb-2">
+                                        <i class="fas fa-dollar-sign me-2" style="color: #48bb78; width: 16px;"></i>
+                                        <span style="color: #48bb78; font-weight: 600;">{{ number_format($coursItem->tarif, 0) }}$ / mois</span>
+                                    </div>
+                                @endif
+
+                                <!-- Places disponibles -->
+                                <div class="cours-detail mb-3">
+                                    <i class="fas fa-users me-2" style="color: #ed8936; width: 16px;"></i>
+                                    <span style="color: #a0aec0;">
+                                        {{ $coursItem->inscriptions->where('statut', 'actif')->count() }} / {{ $coursItem->places_max }} places
+                                    </span>
+                                    @php
+                                        $pourcentage = $coursItem->places_max > 0 ? ($coursItem->inscriptions->where('statut', 'actif')->count() / $coursItem->places_max) * 100 : 0;
+                                    @endphp
+                                    <div class="progress mt-1" style="height: 4px; background: rgba(255, 255, 255, 0.1);">
+                                        <div class="progress-bar" 
+                                             style="background: {{ $pourcentage >= 90 ? 'linear-gradient(135deg, #f56565, #e53e3e)' : ($pourcentage >= 70 ? 'linear-gradient(135deg, #ed8936, #dd6b20)' : 'linear-gradient(135deg, #48bb78, #38b2ac)') }}; width: {{ $pourcentage }}%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Horaires -->
+                            @if($coursItem->plages_horaires)
+                                @php
+                                    $plages = is_string($coursItem->plages_horaires) 
+                                        ? json_decode($coursItem->plages_horaires, true) 
+                                        : $coursItem->plages_horaires;
+                                @endphp
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-clock me-2" style="color: #667eea;"></i>
+                                        <small style="color: #cbd5e0; font-weight: 600;">Horaires</small>
+                                    </div>
+                                    <div class="horaires-container">
+                                        @foreach($plages as $plage)
+                                            @foreach($plage['jours'] ?? [] as $jour)
+                                                <span class="cours-horaire me-1 mb-1">
+                                                    {{ ucfirst($jour) }} {{ $plage['heure_debut'] }}-{{ $plage['heure_fin'] }}
+                                                </span>
+                                            @endforeach
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Description -->
+                            @if($coursItem->description)
+                                <div class="mb-3">
+                                    <p style="color: #a0aec0; font-size: 0.9rem; line-height: 1.4; margin: 0;">
+                                        {{ Str::limit($coursItem->description, 100) }}
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Footer avec actions -->
+                        <div class="card-footer" style="background: rgba(45, 55, 72, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.1); border-radius: 0 0 15px 15px; padding: 15px 20px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <a href="{{ route('cours.show', $coursItem) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('cours.edit', $coursItem) }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ route('cours.inscriptions', $coursItem) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-users"></i>
+                                    </a>
+                                </div>
+                                
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(45, 55, 72, 0.95); border: 1px solid rgba(255, 255, 255, 0.1);">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('cours.duplicate', $coursItem) }}" style="color: #a0aec0;">
+                                                <i class="fas fa-copy me-2"></i>Dupliquer
                                             </a>
-                                            
-                                            <a href="{{ route('cours.inscriptions', $coursItem) }}" 
-                                               class="btn-action btn-action-inscriptions action-tooltip" 
-                                               data-tooltip="Gérer les inscriptions">
-                                                <i class="fas fa-users"></i>
+                                        </li>
+                                        @if($coursItem->session)
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('cours.sessions.show', $coursItem->session) }}" style="color: #a0aec0;">
+                                                <i class="fas fa-calendar me-2"></i>Voir la session
                                             </a>
-                                            
-                                            @if(auth()->user()->role !== 'superadmin')
-                                                <a href="{{ route('cours.edit', $coursItem) }}" 
-                                                   class="btn-action btn-action-edit action-tooltip" 
-                                                   data-tooltip="Modifier">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                
-                                                <button type="button" 
-                                                        class="btn-action btn-action-duplicate action-tooltip" 
-                                                        data-tooltip="Dupliquer"
-                                                        onclick="dupliquerCours({{ $coursItem->id }})">
-                                                    <i class="fas fa-copy"></i>
+                                        </li>
+                                        @endif
+                                        <li><hr class="dropdown-divider" style="border-color: rgba(255, 255, 255, 0.1);"></li>
+                                        <li>
+                                            <form method="POST" action="{{ route('cours.destroy', $coursItem) }}" 
+                                                  onsubmit="return confirm('Supprimer ce cours et toutes ses inscriptions ?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="dropdown-item" style="color: #f56565;">
+                                                    <i class="fas fa-trash me-2"></i>Supprimer
                                                 </button>
-                                                
-                                                <form action="{{ route('cours.destroy', $coursItem) }}" 
-                                                      method="POST" 
-                                                      class="d-inline-block"
-                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce cours et tous ses horaires ?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="btn-action btn-action-delete action-tooltip" 
-                                                            data-tooltip="Supprimer">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Pagination -->
-                @if($cours->hasPages())
-                    <div class="pagination-wrapper">
-                        {{ $cours->appends(request()->query())->links() }}
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                @endif
-            @else
-                <!-- État vide -->
-                <div class="empty-state">
-                    <i class="fas fa-graduation-cap"></i>
-                    <h4>Aucun cours trouvé</h4>
-                    <p>
-                        @if(request()->hasAny(['ecole_id', 'session_id', 'jour']) && (request('ecole_id') !== 'all' || request('session_id') !== 'all' || request('jour') !== 'all'))
-                            Aucun cours ne correspond aux filtres sélectionnés.
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-4">
+            {{ $cours->appends(request()->query())->links() }}
+        </div>
+    @else
+        <!-- État vide -->
+        <div class="text-center py-5" style="color: #a0aec0;">
+            <div class="card" style="background: rgba(26, 54, 93, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);">
+                <div class="card-body py-5">
+                    <i class="fas fa-inbox fa-4x mb-4" style="color: #4a5568;"></i>
+                    <h4 style="color: #e2e8f0;">Aucun cours trouvé</h4>
+                    <p class="mb-4">
+                        @if(request()->hasAny(['ecole_id', 'session_id', 'jour']))
+                            Aucun cours ne correspond à vos critères de recherche.
                         @else
-                            Il n'y a aucun cours enregistré pour le moment.
+                            Vous n'avez pas encore de cours configurés.
                         @endif
                     </p>
-                    @if(auth()->user()->role !== 'superadmin')
-                        <a href="{{ route('cours.create') }}" class="btn-add-cours">
-                            <i class="fas fa-plus me-2"></i>
-                            Créer le premier cours
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ route('cours.create') }}" class="btn btn-success-gradient">
+                            <i class="fas fa-plus me-2"></i>Créer le premier cours
                         </a>
-                    @endif
+                        @if(request()->hasAny(['ecole_id', 'session_id', 'jour']))
+                            <a href="{{ route('cours.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Effacer les filtres
+                            </a>
+                        @endif
+                    </div>
                 </div>
-            @endif
+            </div>
         </div>
-    </div>
+    @endif
 </div>
+@endsection
 
-<style>
-/* Styles additionnels pour l'affichage amélioré */
-.cours-description {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-}
-
-.cours-instructeur {
-    color: #ffc107;
-    font-size: 0.8rem;
-    margin-top: 0.25rem;
-}
-
-.niveau-debutant {
-    background: linear-gradient(45deg, #28a745, #20c997);
-}
-
-.niveau-intermediaire {
-    background: linear-gradient(45deg, #ffc107, #fd7e14);
-}
-
-.niveau-avance {
-    background: linear-gradient(45deg, #dc3545, #e83e8c);
-}
-
-.niveau-tous_niveaux {
-    background: linear-gradient(45deg, #17a2b8, #6f42c1);
-}
-
-.session-periode {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.8rem;
-}
-
-.places-info {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.places-bar {
-    width: 60px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 0.25rem;
-}
-
-.places-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #28a745, #20c997);
-    transition: width 0.3s ease;
-}
-
-.places-danger .places-fill {
-    background: linear-gradient(90deg, #dc3545, #c82333);
-}
-
-.places-warning .places-fill {
-    background: linear-gradient(90deg, #ffc107, #e0a800);
-}
-
-.duree-info {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.75rem;
-}
-
-.btn-action-duplicate {
-    background: linear-gradient(135deg, #6f42c1, #9b59b6);
-    color: white;
-}
-
-.btn-action-duplicate:hover {
-    background: linear-gradient(135deg, #9b59b6, #6f42c1);
-    transform: translateY(-2px);
-}
-</style>
-
+@push('scripts')
+<script src="{{ asset('js/cours/sessions-duplication.js') }}"></script>
 <script>
-function dupliquerCours(coursId) {
-    window.location.href = `{{ route('cours.create') }}?duplicate=${coursId}`;
-}
-
-// Animation des tooltips
+// Auto-submit des filtres
 document.addEventListener('DOMContentLoaded', function() {
-    const tooltips = document.querySelectorAll('.action-tooltip');
-    tooltips.forEach(tooltip => {
-        tooltip.addEventListener('mouseenter', function() {
-            const tooltipText = this.getAttribute('data-tooltip');
-            if (tooltipText) {
-                // Créer et afficher le tooltip
-                const tooltipEl = document.createElement('div');
-                tooltipEl.className = 'custom-tooltip';
-                tooltipEl.textContent = tooltipText;
-                document.body.appendChild(tooltipEl);
-                
-                // Positionner le tooltip
-                const rect = this.getBoundingClientRect();
-                tooltipEl.style.position = 'fixed';
-                tooltipEl.style.top = (rect.top - 35) + 'px';
-                tooltipEl.style.left = (rect.left + rect.width / 2 - tooltipEl.offsetWidth / 2) + 'px';
-                tooltipEl.style.background = 'rgba(0, 0, 0, 0.8)';
-                tooltipEl.style.color = 'white';
-                tooltipEl.style.padding = '0.5rem';
-                tooltipEl.style.borderRadius = '4px';
-                tooltipEl.style.fontSize = '0.8rem';
-                tooltipEl.style.zIndex = '1000';
-                tooltipEl.style.opacity = '0';
-                tooltipEl.style.transition = 'opacity 0.3s ease';
-                
-                setTimeout(() => tooltipEl.style.opacity = '1', 10);
-                
-                this._tooltip = tooltipEl;
-            }
-        });
-        
-        tooltip.addEventListener('mouseleave', function() {
-            if (this._tooltip) {
-                this._tooltip.remove();
-                this._tooltip = null;
-            }
+    const selects = document.querySelectorAll('#ecole_id, #session_id, #jour, #sort');
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
         });
     });
 });
 </script>
-@endsection
+@endpush

@@ -1,0 +1,42 @@
+/* StudiosDB - Style uniforme AdminLTE */
+:root {
+    --primary-blue: #007bff;
+    --success-green: #28a745;
+    --warning-orange: #ffc107;
+    --danger-red: #dc3545;
+    --dark-bg: #343a40;
+    --darker-bg: #23272b;
+}
+
+/* Adaptation de nos boutons au style AdminLTE */
+.btn-success-gradient {
+    background: var(--success-green);
+    border: none;
+    color: white;
+}
+
+.btn-secondary-glass {
+    background: var(--dark-bg);
+    border: 1px solid #495057;
+    color: #fff;
+}
+
+/* Sessions et cours - style AdminLTE */
+.cours-card, .session-card {
+    background: var(--dark-bg);
+    border: 1px solid #495057;
+    color: white;
+}
+
+/* Formulaires AdminLTE */
+.form-control {
+    background: var(--darker-bg);
+    border: 1px solid #495057;
+    color: white;
+}
+
+.form-control:focus {
+    background: var(--darker-bg);
+    border-color: var(--primary-blue);
+    color: white;
+}

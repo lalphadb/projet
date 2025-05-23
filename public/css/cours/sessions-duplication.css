@@ -496,3 +496,162 @@
     border-left: 4px solid #f56565;
     background: rgba(245, 101, 101, 0.1);
 }
+
+/* ===================================
+   INDEX COURS - CARTES ET PAGINATION
+   ================================== */
+
+/* Cartes de cours */
+.cours-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.cours-horaire {
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    color: #a5b4fc;
+    display: inline-block;
+}
+
+.horaires-container {
+    max-height: 60px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(72, 187, 120, 0.5) transparent;
+}
+
+.horaires-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.horaires-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.horaires-container::-webkit-scrollbar-thumb {
+    background: rgba(72, 187, 120, 0.5);
+    border-radius: 2px;
+}
+
+/* Pagination glassmorphique */
+.pagination .page-link {
+    background: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e2e8f0;
+    backdrop-filter: blur(10px);
+    margin: 0 2px;
+    border-radius: 6px;
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: #48bb78;
+    color: white;
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+.pagination .page-link:hover {
+    background: rgba(45, 55, 72, 1);
+    color: white;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.pagination .page-item.disabled .page-link {
+    background: rgba(45, 55, 72, 0.4);
+    color: #6b7280;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Cartes cours détaillées */
+.cours-details {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.cours-detail {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.cours-detail i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Progress bar pour places */
+.progress {
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+    border-radius: 2px;
+}
+
+/* Badges de session */
+.badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Dropdowns glassmorphiques */
+.dropdown-menu {
+    backdrop-filter: blur(15px);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.dropdown-divider {
+    margin: 8px 0;
+}
+
+/* États des cours */
+.cours-card[data-statut="inactif"] {
+    opacity: 0.7;
+}
+
+.cours-card[data-statut="complet"] .progress-bar {
+    background: var(--danger-gradient) !important;
+}
+
+/* Responsive pour cartes */
+@media (max-width: 768px) {
+    .cours-card {
+        margin-bottom: 20px;
+    }
+    
+    .horaires-container {
+        max-height: 80px;
+    }
+    
+    .cours-horaire {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+}
+
+/* Animation d'apparition des cartes */
+.cours-card {
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.cours-card:nth-child(1) { animation-delay: 0.1s; }
+.cours-card:nth-child(2) { animation-delay: 0.2s; }
+.cours-card:nth-child(3) { animation-delay: 0.3s; }
+.cours-card:nth-child(4) { animation-delay: 0.4s; }
+.cours-card:nth-child(5) { animation-delay: 0.5s; }
+.cours-card:nth-child(6) { animation-delay: 0.6s; }

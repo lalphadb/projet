@@ -104,10 +104,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{cours}/reinscription-auto', [CoursController::class, 'reinscriptionAuto'])->name('reinscription.auto');
         
         // -------------------------------------------
-        // SOUS-MODULE : SESSIONS
+        // SOUS-MODULE : SESSIONS DE COURS
         // -------------------------------------------
         Route::prefix('sessions')->name('sessions.')->group(function () {
-            // CRUD Sessions
+            // CRUD Sessions complet
             Route::get('/', [CoursSessionController::class, 'index'])->name('index');
             Route::get('/create', [CoursSessionController::class, 'create'])->name('create');
             Route::post('/', [CoursSessionController::class, 'store'])->name('store');
@@ -119,7 +119,7 @@ Route::middleware(['auth'])->group(function () {
             // Génération automatique des sessions
             Route::post('/generate', [CoursSessionController::class, 'generateSessions'])->name('generate');
             
-            // 🆕 NOUVELLES FONCTIONNALITÉS - Duplication et Réinscriptions
+            // Duplication et gestion des réinscriptions
             Route::post('/{session}/dupliquer', [CoursSessionController::class, 'dupliquer'])->name('dupliquer');
             Route::patch('/{session}/activer-reinscriptions', [CoursSessionController::class, 'activerReinscriptions'])->name('activer-reinscriptions');
             Route::patch('/{session}/fermer-reinscriptions', [CoursSessionController::class, 'fermerReinscriptions'])->name('fermer-reinscriptions');
@@ -139,7 +139,7 @@ Route::middleware(['auth'])->group(function () {
     // GESTION DES ÉCOLES
     // -------------------------------------------
     Route::resource('ecoles', EcolesController::class)->names('ecoles');
-    Route::put('ecoles/{ecole}/toggle-status', [EcolesController::class, 'toggleStatus'])->name('ecoles.toggle-status');
+    Route::put('/ecoles/{ecole}/toggle-status', [EcolesController::class, 'toggleStatus'])->name('ecoles.toggle-status');
 
     // -------------------------------------------
     // GESTION DES PRÉSENCES
@@ -157,25 +157,38 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // -------------------------------------------
-    // AUTRES MODULES
+    // GESTION DES SÉMINAIRES
     // -------------------------------------------
-    
-    // Portes ouvertes
-    Route::resource('portes-ouvertes', PortesOuvertesController::class)->names('portes-ouvertes');
-    
-    // Journées portes ouvertes
-    Route::resource('journees-portes-ouvertes', JourneePortesOuvertesController::class)
-        ->names('journees-portes-ouvertes');
-
-    // Séminaires
     Route::resource('seminaires', SeminaireController::class)->names('seminaires');
+    
+    // Association membres-séminaires
+    Route::post('/seminaires/{seminaire}/inscrire', [SeminaireController::class, 'inscrireMembre'])->name('seminaires.inscrire');
+    Route::delete('/seminaires/{seminaire}/desinscrire/{membre}', [SeminaireController::class, 'desinscrireMembre'])->name('seminaires.desinscrire');
+
+    // -------------------------------------------
+    // JOURNÉES PORTES OUVERTES
+    // -------------------------------------------
+    Route::resource('portes-ouvertes', PortesOuvertesController::class)->names('portes-ouvertes');
+    Route::resource('journees-portes-ouvertes', JourneePortesOuvertesController::class)->names('journees-portes-ouvertes');
 
     // -------------------------------------------
     // EXPORTS (PDF / Excel)
     // -------------------------------------------
     Route::prefix('export')->name('export.')->group(function () {
+        // Exports membres
         Route::get('/membres/excel', [ExportController::class, 'exportMembresExcel'])->name('membres.excel');
         Route::get('/membres/pdf', [ExportController::class, 'exportMembresPdf'])->name('membres.pdf');
+        
+        // Exports cours et sessions
+        Route::get('/cours/excel', [ExportController::class, 'exportCoursExcel'])->name('cours.excel');
+        Route::get('/sessions/excel', [ExportController::class, 'exportSessionsExcel'])->name('sessions.excel');
+        
+        // Exports présences
+        Route::get('/presences/excel', [ExportController::class, 'exportPresencesExcel'])->name('presences.excel');
+        Route::get('/presences/pdf/{cours}', [ExportController::class, 'exportPresencesPdf'])->name('presences.pdf');
+        
+        // Rapports globaux
+        Route::get('/rapport-complet/pdf', [ExportController::class, 'exportRapportComplet'])->name('rapport.complet');
     });
 
     // -------------------------------------------
@@ -185,6 +198,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ProfileController::class, 'edit'])->name('edit');
         Route::patch('/', [ProfileController::class, 'update'])->name('update');
         Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+        
+        // Changement de mot de passe
+        Route::get('/password', [ProfileController::class, 'editPassword'])->name('password.edit');
+        Route::patch('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
     });
 
     // -------------------------------------------
@@ -194,7 +211,7 @@ Route::middleware(['auth'])->group(function () {
         // CRUD Utilisateurs
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');
-        Route::post('/store', [UserController::class, 'store'])->name('store');
+        Route::post('/', [UserController::class, 'store'])->name('store');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
         Route::patch('/{user}', [UserController::class, 'update'])->name('update');
@@ -205,26 +222,67 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/promote', [UserController::class, 'promoteStore'])->name('promote.store');
         Route::put('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
         Route::put('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
+        
+        // Gestion des permissions
+        Route::get('/{user}/permissions', [UserController::class, 'permissions'])->name('permissions');
+        Route::patch('/{user}/permissions', [UserController::class, 'updatePermissions'])->name('permissions.update');
     });
 
     // -------------------------------------------
-    // ROUTE DE TEST (Middleware)
+    // ROUTES AJAX ET API INTERNES
     // -------------------------------------------
-    Route::get('/test-checkrole', fn() => "✅ Middleware 'checkrole' chargé et fonctionnel.")
-        ->middleware('checkrole:admin,superladmin');
+    Route::prefix('api')->name('api.')->group(function () {
+        // Auto-complétion et recherches
+        Route::get('/membres/search', [MembresController::class, 'search'])->name('membres.search');
+        Route::get('/cours/search', [CoursController::class, 'search'])->name('cours.search');
+        Route::get('/ecoles/list', [EcolesController::class, 'apiList'])->name('ecoles.list');
+        
+        // Statistiques temps réel
+        Route::get('/stats/dashboard', [DashboardController::class, 'apiStats'])->name('stats.dashboard');
+        Route::get('/stats/cours/{cours}', [CoursController::class, 'apiStats'])->name('stats.cours');
+        Route::get('/stats/session/{session}', [CoursSessionController::class, 'apiStats'])->name('stats.session');
+        
+        // Validation temps réel
+        Route::post('/validate/email', [UserController::class, 'validateEmail'])->name('validate.email');
+        Route::post('/validate/membre', [MembresController::class, 'validateMembre'])->name('validate.membre');
+    });
+
+    // -------------------------------------------
+    // ROUTES DE TEST ET DEBUG (À SUPPRIMER EN PROD)
+    // -------------------------------------------
+    Route::prefix('test')->name('test.')->group(function () {
+        Route::get('/checkrole', fn() => "✅ Middleware 'checkrole' chargé et fonctionnel.")
+            ->middleware('checkrole:admin,superadmin');
+        Route::get('/email', [ExportController::class, 'testEmail'])->name('email');
+        Route::get('/permissions', [UserController::class, 'testPermissions'])->name('permissions');
+    });
 });
 
 // =============================================
-// ROUTE DE TEST TEMPORAIRE (À SUPPRIMER EN PROD)
+// ROUTES TEMPORAIRES (À SUPPRIMER EN PRODUCTION)
 // =============================================
-Route::get('/test-login', function() {
-    $user = \App\Models\User::where('email', 'test@test.ca')->first();
-    if ($user && \Hash::check('AdminPass123', $user->password)) {
-        \Auth::login($user);
-        return redirect('/dashboard');
-    }
-    return "Échec du test de connexion";
-});
+if (config('app.debug')) {
+    Route::get('/test-login', function() {
+        $user = \App\Models\User::where('email', 'test@test.ca')->first();
+        if ($user && \Hash::check('B0bby2111', $user->password)) {
+            \Auth::login($user);
+            return redirect('/dashboard');
+        }
+        return "Échec du test de connexion";
+    });
+    
+    Route::get('/debug/routes', function() {
+        $routes = collect(\Route::getRoutes())->map(function ($route) {
+            return [
+                'method' => implode('|', $route->methods()),
+                'uri' => $route->uri(),
+                'name' => $route->getName(),
+                'action' => $route->getActionName(),
+            ];
+        });
+        return response()->json($routes);
+    });
+}
 
 // =============================================
 // ROUTES D'AUTHENTIFICATION (Laravel Breeze/Fortify)
