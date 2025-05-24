@@ -1,0 +1,29 @@
+/* ===== NAVBAR COMPACTE COMME L'OBJECTIF ===== */
+nav.main-header.navbar.navbar-expand.navbar-dark {
+    margin-left: 250px !important;
+    width: calc(100% - 250px) !important;
+    height: 45px !important;
+    min-height: 45px !important;
+    padding: 0.25rem 1rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(15px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    position: fixed !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+}
+
+.content-wrapper {
+    margin-left: 250px !important;
+    margin-top: 45px !important;
+    padding-top: 10px !important;
+}
+
+.sidebar-collapse nav.main-header.navbar {
+    margin-left: 60px !important;
+    width: calc(100% - 60px) !important;
+}
+
+.sidebar-collapse .content-wrapper {
+    margin-left: 60px !important;
+}
