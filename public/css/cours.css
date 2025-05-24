@@ -728,3 +728,469 @@
 .cours-table tbody tr:nth-child(3) { animation-delay: 0.3s; }
 .cours-table tbody tr:nth-child(4) { animation-delay: 0.4s; }
 .cours-table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+
+/* ===== HORAIRES MULTIPLES ===== */
+/* ========================================
+   COURS HORAIRES MULTIPLES - STYLES
+   ======================================== */
+
+/* Conteneur principal des horaires */
+.horaires-container {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+/* Items d'horaires individuels */
+.horaire-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.horaire-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(23, 162, 184, 0.3);
+    transform: translateY(-2px);
+}
+
+.horaire-item:last-child {
+    margin-bottom: 0;
+}
+
+/* En-tête des horaires */
+.horaire-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.horaire-title {
+    color: #17a2b8;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.horaire-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Boutons d'action sur les horaires */
+.btn-remove-horaire {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-remove-horaire:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+.btn-add-horaire {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-add-horaire:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+/* Prévisualisation des horaires */
+.horaire-preview {
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    color: #17a2b8;
+    font-weight: 500;
+}
+
+/* États des horaires */
+.horaire-existing {
+    border-left: 4px solid #28a745;
+}
+
+.horaire-new {
+    border-left: 4px solid #ffc107;
+}
+
+.horaire-modified {
+    border-left: 4px solid #17a2b8;
+}
+
+/* Indicateur de changement */
+.change-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ffc107;
+    color: #000;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Badges de statut */
+.badge-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+    color: #000;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-info {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Affichage des horaires multiples dans la liste */
+.horaires-multiples {
+    display: flex;
+    flex-direction: column;  
+    gap: 0.25rem;
+}
+
+.horaire-item-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.jour {
+    color: #17a2b8;
+    font-weight: 600;
+    min-width: 60px;
+}
+
+.heure {
+    color: #fff;
+    font-weight: 500;
+}
+
+.salle {
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+}
+
+.horaires-plus {
+    margin-top: 0.25rem;
+    text-align: center;
+}
+
+.cours-schedule {
+    min-width: 140px;
+}
+
+/* Badge cours multiples */
+.cours-multiples-badge {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 0.25rem;
+}
+
+/* Avertissements */
+.inscriptions-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #ffc107;
+}
+
+/* Statistiques des cours */
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(45deg, #17a2b8, #20c997);
+    border-radius: 12px;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 0.25rem;
+}
+
+/* Améliorations des places */
+.places-info {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.places-bar {
+    width: 60px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.places-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.3s ease;
+}
+
+.places-danger .places-fill {
+    background: linear-gradient(90deg, #dc3545, #c82333);
+}
+
+.places-warning .places-fill {
+    background: linear-gradient(90deg, #ffc107, #e0a800);
+}
+
+.duree-info {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+}
+
+/* Niveaux des cours */
+.niveau-debutant {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.niveau-intermediaire {
+    background: linear-gradient(45deg, #ffc107, #fd7e14);
+}
+
+.niveau-avance {
+    background: linear-gradient(45deg, #dc3545, #e83e8c);
+}
+
+.niveau-tous_niveaux {
+    background: linear-gradient(45deg, #17a2b8, #6f42c1);
+}
+
+/* Boutons d'action améliorés */
+.btn-action-duplicate {
+    background: linear-gradient(135deg, #6f42c1, #9b59b6);
+    color: white;
+}
+
+.btn-action-duplicate:hover {
+    background: linear-gradient(135deg, #9b59b6, #6f42c1);
+    transform: translateY(-2px);
+}
+
+/* Tooltips personnalisés */
+.custom-tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    z-index: 1000;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .horaire-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .btn-add-horaire {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .horaires-multiples {
+        gap: 0.5rem;
+    }
+    
+    .cours-schedule {
+        min-width: unset;
+    }
+    
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .horaires-container {
+        padding: 1rem;
+    }
+    
+    .horaire-item {
+        padding: 0.75rem;
+    }
+    
+    .btn-remove-horaire {
+        width: 25px;
+        height: 25px;
+    }
+}
+
+/* Animations d'entrée */
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+}
+
+.horaire-item.animate-in {
+    animation: slideInFromRight 0.3s ease;
+}
+
+.horaire-item.animate-out {
+    animation: slideOutToLeft 0.3s ease;
+}
+
+/* États de focus améliorés */
+.form-control:focus,
+.form-select:focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+
+/* Amélioration des modales */
+.modal-content {
+    background: #2c3e50;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(220, 53, 69, 0.1));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
