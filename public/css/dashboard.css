@@ -513,3 +513,20 @@
 .breadcrumb-item.active {
     color: rgba(255, 255, 255, 0.8);
 }
+
+/* ===== ACTIONS RAPIDES - ESPACEMENT ===== */
+.quick-actions {
+    margin-bottom: 30px !important;
+    padding: 20px 0 !important;
+}
+
+.quick-actions .row {
+    margin-bottom: 20px !important;
+}
+
+/* Assurer que le contenu ne touche pas le footer */
+.content {
+    padding-bottom: 40px !important;
+}
+
+/* Reload sam 24 mai 2025 14:36:16 EDT */
